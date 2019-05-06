@@ -1,1 +1,0 @@
-LeGo_Init@Initialisiert LeGo
