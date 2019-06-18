@@ -399,7 +399,10 @@ namespace DaedalusLib.Parser
                 }
                 else SynErr(Kinds.ErrInvalidVariableDeclaration);
             }
-            Expect(Kinds.Semicolon);
+            if (la.Kind != Kinds.Var)  // Allows multiple var ... , var ... var ... ;
+            {
+                Expect(Kinds.Semicolon);
+            }
 
             var tm = new TokenMatch
             {
@@ -417,6 +420,8 @@ namespace DaedalusLib.Parser
             while (la.Kind == Kinds.Comma)
             {
                 Get();
+                if (la.Kind == Kinds.Var) break; // Allows multiple var ... , var ... var ... ;
+
                 Expect(Kinds.Identifier);
             }
             if (la.Kind == Kinds.BracketOpen)
