@@ -15,6 +15,7 @@ namespace DaedalusLib.Parser
         public int line;    // token line (starting at 1)
         public string val;  // token value
         public Token next;  // ML 2005-03-11 Tokens are kept in linked list
+        public Token prev;
     }
 
     //-----------------------------------------------------------------------------------
@@ -437,6 +438,31 @@ namespace DaedalusLib.Parser
 
         private void CheckLiteral()
         {
+            if (t.prev != null)
+            {
+                switch (t.prev.Kind)
+                {
+                    case Kinds.Dot:
+                    case Kinds.Assign:
+                    case Kinds.AssignAdd:
+                    case Kinds.AssignAnd:
+                    case Kinds.AssignDiv:
+                    case Kinds.AssignMod:
+                    case Kinds.AssignMul:
+                    case Kinds.AssignOr:
+                    case Kinds.AssignShiftLeft:
+                    case Kinds.AssignShiftRight:
+                    case Kinds.AssignSub:
+                    case Kinds.AssignXOr:
+                        return; // No special meaning.
+                }
+                if (t.prev.prev != null)
+                {
+                    if (t.prev.prev.Kind == Kinds.Var || t.prev.prev.Kind == Kinds.Const)
+                        return; // No special meaning.
+                }
+            }
+
             switch (t.val.ToLower())
             {
                 case "int": t.kind = 5; break;
@@ -465,6 +491,7 @@ namespace DaedalusLib.Parser
 
         private Token NextToken()
         {
+            var prevToken = t;
             while (ch == ' ' ||
                 ch >= 9 && ch <= 10 || ch == 13
             ) NextCh();
@@ -473,7 +500,8 @@ namespace DaedalusLib.Parser
             {
                 pos = pos,
                 col = col,
-                line = line
+                line = line,
+                prev = prevToken
             };
             int state;
             if (start.ContainsKey(ch)) { state = (int)start[ch]; }
