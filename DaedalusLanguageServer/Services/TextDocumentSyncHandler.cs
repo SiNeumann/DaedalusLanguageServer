@@ -89,6 +89,9 @@ namespace DemoLanguageServer.Services
             {
                 path = Path.GetFullPath(path.Substring(1));
             }
+            // Workaround: Skip externals. Too many wrong function definitions 
+            if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return;
+
             _router.Window.LogInfo(path);
             var parserResult = DaedalusParserHelper.Load(path);
             if (parserResult.ErrorMessages.Count > 0)
