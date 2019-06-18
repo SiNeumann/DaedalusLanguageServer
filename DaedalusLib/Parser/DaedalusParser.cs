@@ -489,7 +489,8 @@ namespace DaedalusLib.Parser
                 {
                     IfStatement();
                 }
-                Expect(Kinds.Semicolon);
+                if (la.Kind == Kinds.Semicolon)
+                    Expect(Kinds.Semicolon);
             }
             else if (StartOf(5))
             {
