@@ -498,9 +498,8 @@ namespace DaedalusLib.Parser
         private Token NextToken()
         {
             var prevToken = t;
-            while (ch == ' ' ||
-                ch >= 9 && ch <= 10 || ch == 13
-            ) NextCh();
+            while (ch <= ' ')
+                NextCh();
             if (ch == '/' && Comment0() || ch == '/' && Comment1()) return NextToken();
             t = new Token
             {
