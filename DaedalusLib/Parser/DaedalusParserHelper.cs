@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -25,7 +24,7 @@ namespace DaedalusLib.Parser
     {
         public static ParserResult Load(string fileName)
         {
-            using(var fs = File.OpenRead(fileName))
+            using (var fs = File.OpenRead(fileName))
             {
                 return Load(fs);
             }
@@ -71,6 +70,8 @@ namespace DaedalusLib.Parser
 
                     if (matchLine.Success) line = matchLine.Groups[1].Value;
                     if (matchCol.Success) column = matchCol.Groups[1].Value;
+
+                    error = error.Substring(error.IndexOf(':') + 1);
 
                     int.TryParse(line, out var lineVal);
                     int.TryParse(column, out var colVal);
