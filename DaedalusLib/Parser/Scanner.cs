@@ -438,31 +438,6 @@ namespace DaedalusLib.Parser
 
         private void CheckLiteral()
         {
-            if (t.prev != null)
-            {
-                switch (t.prev.Kind)
-                {
-                    case Kinds.Dot:
-                    case Kinds.Assign:
-                    case Kinds.AssignAdd:
-                    case Kinds.AssignAnd:
-                    case Kinds.AssignDiv:
-                    case Kinds.AssignMod:
-                    case Kinds.AssignMul:
-                    case Kinds.AssignOr:
-                    case Kinds.AssignShiftLeft:
-                    case Kinds.AssignShiftRight:
-                    case Kinds.AssignSub:
-                    case Kinds.AssignXOr:
-                        return; // No special meaning.
-                }
-                if (t.prev.prev != null)
-                {
-                    if (t.prev.prev.Kind == Kinds.Var || t.prev.prev.Kind == Kinds.Const)
-                        return; // No special meaning.
-                }
-            }
-
             switch (t.val.ToLower())
             {
                 case "int": t.kind = 5; break;
@@ -486,6 +461,37 @@ namespace DaedalusLib.Parser
                 case "func": t.kind = 23; break;
                 case "class": t.kind = 24; break;
                 default: break;
+            }
+
+            if (t.prev != null)
+            {
+                switch (t.prev.Kind)
+                {
+                    case Kinds.Dot:
+                    case Kinds.Assign:
+                    case Kinds.AssignAdd:
+                    case Kinds.AssignAnd:
+                    case Kinds.AssignDiv:
+                    case Kinds.AssignMod:
+                    case Kinds.AssignMul:
+                    case Kinds.AssignOr:
+                    case Kinds.AssignShiftLeft:
+                    case Kinds.AssignShiftRight:
+                    case Kinds.AssignSub:
+                    case Kinds.AssignXOr:
+                    case Kinds.Comma when t.Kind != Kinds.Var:
+                    case Kinds.ParenOpen when t.Kind != Kinds.Var:
+                        t.kind = 1;
+                        return; // No special meaning.
+                }
+                if (t.prev.prev != null)
+                {
+                    if (t.prev.prev.Kind == Kinds.Var || t.prev.prev.Kind == Kinds.Const)
+                    {
+                        t.kind = 1;
+                        return; // No special meaning.
+                    }
+                }
             }
         }
 
