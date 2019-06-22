@@ -1,4 +1,5 @@
-﻿using DaedalusLanguageServer.Services;
+﻿using DaedalusCompiler.Compilation;
+using DaedalusLanguageServer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -59,71 +60,6 @@ namespace DaedalusLanguageServer
             {
                 parsedDocumentsManager.Parse(new Uri(builtIn), File.ReadAllText(builtIn, Encoding.GetEncoding(1250)), default);
             }
-        }
-    }
-    public class ParsedDocumentsManager
-    {
-        private readonly ConcurrentDictionary<Uri, DaedalusCompiler.Compilation.Compiler.ParseResult> LastParseResults
-            = new ConcurrentDictionary<Uri, DaedalusCompiler.Compilation.Compiler.ParseResult>();
-
-        public ParsedDocumentsManager()
-        {
-
-        }
-
-        public DaedalusCompiler.Compilation.Compiler.ParseResult GetParseResult(Uri uri)
-        {
-            if (LastParseResults.TryGetValue(uri, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
-
-        public void UpdateParseResult(Uri uri, DaedalusCompiler.Compilation.Compiler.ParseResult parserResult)
-        {
-            LastParseResults.AddOrUpdate(uri, parserResult, (u, oldParse) => parserResult);
-        }
-
-        public IReadOnlyDictionary<Uri, DaedalusCompiler.Compilation.Compiler.ParseResult> GetDocuments()
-        {
-            return LastParseResults;
-        }
-
-        public PublishDiagnosticsParams Parse(Uri uri, string text, CancellationToken cancellation)
-        {
-            var path = uri.LocalPath;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && path.StartsWith("/"))
-            {
-                path = Path.GetFullPath(path.Substring(1));
-            }
-            // Workaround: Skip externals. Too many wrong function definitions 
-            if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return null;
-
-            DaedalusCompiler.Compilation.Compiler.ParseResult parserResult = null;
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                parserResult = DaedalusCompiler.Compilation.Compiler.Load(path);
-            }
-            else
-            {
-                parserResult = DaedalusCompiler.Compilation.Compiler.Parse(text);
-            }
-            if (parserResult.SyntaxErrors.Count > 0)
-            {
-                return new PublishDiagnosticsParams
-                {
-                    Uri = uri,
-                    Diagnostics = new Container<Diagnostic>(parserResult.SyntaxErrors
-                        .Select(x => new Diagnostic
-                        {
-                            Message = x.Message,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(x.Line - 1, x.Column), new Position(x.Line - 1, x.Column)),
-                        }))
-                };
-            }
-            UpdateParseResult(uri, parserResult);
-            return null;
         }
     }
 }
