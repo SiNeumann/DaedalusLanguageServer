@@ -32,6 +32,9 @@ namespace DaedalusLanguageServer.Services
             var symbol = doc.GetWordRangeAtPosition(request.Position).ToUpper();
 
             Symbol v = null;
+
+            // TODO: Implement caching for this!
+
             foreach (var pd in documentsManager.GetDocuments())
             {
                 if ((v = pd.Value.FindSymbol(symbol)) != null)
@@ -44,7 +47,22 @@ namespace DaedalusLanguageServer.Services
                 string marked;
                 if (v is Function fv)
                 {
-                    marked = $"func {fv.ReturnType} {fv.Name}({string.Join(',', fv.Parameters.Select(x => $"{x.Type} {x.Name}"))})";
+                    marked = $"func {fv.ReturnType} {fv.Name}({string.Join(", ", fv.Parameters.Select(x => $"var {x.Type} {x.Name}"))})";
+                }
+                else if (v is Class clv)
+                {
+                    if (clv.Fields.Count > 0)
+                    {
+                        marked = $"class {clv.Name} {{\n\t{string.Join("\t", clv.Fields.Select(x => $"var {x.Type} {x.Name};\n"))}}};";
+                    }
+                    else
+                    {
+                        marked = $"class {clv.Name}";
+                    }
+                }
+                else if (v is Prototype pv)
+                {
+                    marked = $"prototype {pv.Name} ({pv.Parent})";
                 }
                 else if (v is Constant cv)
                 {
@@ -82,6 +100,8 @@ namespace DaedalusLanguageServer.Services
             if ((v = pd.GlobalConstants.FirstOrDefault(x => x.Name.ToUpper() == symbolUppercase)) != null) { }
             else if ((v = pd.GlobalVariables.FirstOrDefault(x => x.Name.ToUpper() == symbolUppercase)) != null) { }
             else if ((v = pd.GlobalFunctions.FirstOrDefault(x => x.Name.ToUpper() == symbolUppercase)) != null) { }
+            else if ((v = pd.GlobalClasses.FirstOrDefault(x => x.Name.ToUpper() == symbolUppercase)) != null) { }
+            else if ((v = pd.GlobalPrototypes.FirstOrDefault(x => x.Name.ToUpper() == symbolUppercase)) != null) { }
 
             return v;
         }
