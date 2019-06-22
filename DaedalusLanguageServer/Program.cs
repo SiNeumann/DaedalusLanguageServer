@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DaedalusLanguageServer
@@ -11,15 +12,19 @@ namespace DaedalusLanguageServer
     {
         private static async Task Main(string[] args)
         {
+            var logLevel = args.Any(x => x == "-debug") ? LogLevel.Trace : LogLevel.Warning;
+
             var server = await LanguageServer.From(options =>
                 options
                     .WithInput(Console.OpenStandardInput())
                     .WithOutput(Console.OpenStandardOutput())
                     .WithLoggerFactory(new LoggerFactory())
                     .AddDefaultLoggingProvider()
-                    .WithMinimumLogLevel(LogLevel.Trace)
+                    .WithMinimumLogLevel(logLevel)
                     .WithServices(ConfigureServices)
                     .WithHandler<TextDocumentSyncHandler>()
+                    .WithHandler<DidChangeWatchedFilesHandler>()
+                    .WithHandler<DidChangeWorkspaceFoldersHandler>()
                  );
 
             await server.WaitForExit;

@@ -5,9 +5,7 @@ VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer", "DaedalusLanguageServer.csproj", "{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLib", "..\DaedalusLib\DaedalusLib.csproj", "{E2CDC9DB-58F8-4067-8161-CF04A5275894}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLib.Tests", "..\DaedalustLib.Tests\DaedalusLib.Tests.csproj", "{13ABA258-B32F-4967-92BF-365E217E1DD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "C:\Users\johnh\Desktop\ros\DaedalusCompiler\src\DaedalusCompiler\DaedalusCompiler.csproj", "{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +17,10 @@ Global
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E2CDC9DB-58F8-4067-8161-CF04A5275894}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E2CDC9DB-58F8-4067-8161-CF04A5275894}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E2CDC9DB-58F8-4067-8161-CF04A5275894}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E2CDC9DB-58F8-4067-8161-CF04A5275894}.Release|Any CPU.Build.0 = Release|Any CPU
-		{13ABA258-B32F-4967-92BF-365E217E1DD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{13ABA258-B32F-4967-92BF-365E217E1DD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{13ABA258-B32F-4967-92BF-365E217E1DD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{13ABA258-B32F-4967-92BF-365E217E1DD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

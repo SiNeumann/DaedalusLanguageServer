@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DaedalusLib\DaedalusLib.csproj" />
+    <ProjectReference Include="C:\Users\johnh\Desktop\ros\DaedalusCompiler\src\DaedalusCompiler\DaedalusCompiler.csproj" />
   </ItemGroup>
 
 </Project>

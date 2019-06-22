@@ -7,6 +7,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -15,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace DemoLanguageServer.Services
 {
+
     public class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
         private readonly ILanguageServer _router;
@@ -59,7 +61,7 @@ namespace DemoLanguageServer.Services
             var text = request.TextDocument.Text;
             _bufferManager.UpdateBuffer(documentPath, text.ToCharArray());
 
-            Parse(request.TextDocument.Uri, cancellationToken);
+            Parse(request.TextDocument.Uri, request.TextDocument.Text, cancellationToken);
             return Unit.Task;
         }
 
@@ -81,7 +83,7 @@ namespace DemoLanguageServer.Services
             _capability = capability;
         }
 
-        public void Parse(Uri uri, CancellationToken cancellation)
+        public void Parse(Uri uri, string text, CancellationToken cancellation)
         {
             var workspaces = _router.Workspace.WorkspaceFolders().GetAwaiter().GetResult();
             var path = uri.LocalPath;
@@ -93,13 +95,21 @@ namespace DemoLanguageServer.Services
             if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return;
 
             _router.Window.LogInfo(path);
-            var parserResult = DaedalusParserHelper.Load(path);
-            if (parserResult.ErrorMessages.Count > 0)
+            List<DaedalusCompiler.Compilation.Compiler.SyntaxError> parserResult = null;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                parserResult = DaedalusCompiler.Compilation.Compiler.Load(path);
+            }
+            else
+            {
+                parserResult = DaedalusCompiler.Compilation.Compiler.Parse(text);
+            }
+            if (parserResult.Count > 0)
             {
                 _router.Document.PublishDiagnostics(new PublishDiagnosticsParams
                 {
                     Uri = uri,
-                    Diagnostics = new Container<Diagnostic>(parserResult.ErrorMessages
+                    Diagnostics = new Container<Diagnostic>(parserResult
                         .Select(x => new Diagnostic
                         {
                             Message = x.Message,
@@ -116,7 +126,7 @@ namespace DemoLanguageServer.Services
 
         public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
         {
-            Parse(request.TextDocument.Uri, cancellationToken);
+            Parse(request.TextDocument.Uri, request.Text, cancellationToken);
             return Unit.Task;
         }
 
