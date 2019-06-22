@@ -1,6 +1,6 @@
 ﻿using static DaedalusLanguageServer.LanguageServerSession;
 
-namespace DemoLanguageServer.Services
+namespace DaedalusLanguageServer.Services
 {
     public class SettingsRoot
     {

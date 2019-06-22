@@ -1,35 +1,25 @@
-﻿using DaedalusLanguageServer;
-using DaedalusLib.Parser;
-using OmniSharp.Extensions.Embedded.MediatR;
+﻿using OmniSharp.Extensions.Embedded.MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DemoLanguageServer.Services
+namespace DaedalusLanguageServer.Services
 {
-
     public class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
         private readonly ILanguageServer _router;
         private readonly BufferManager _bufferManager;
-
-        private readonly DocumentSelector _documentSelector = new DocumentSelector(
-            new DocumentFilter() { Pattern = "**/*.d" },
-            new DocumentFilter() { Pattern = "**/*.D" }
-        );
+        private readonly ParsedDocumentsManager documentsManager;
 
         private SynchronizationCapability _capability;
 
-        public TextDocumentSyncKind Change { get; } = TextDocumentSyncKind.Full;
+        public TextDocumentSyncKind Change => TextDocumentSyncKind.Full;
 
         public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
         {
@@ -41,16 +31,17 @@ namespace DemoLanguageServer.Services
 
             return Unit.Task;
         }
-        public TextDocumentSyncHandler(ILanguageServer router, BufferManager bufferManager)
+        public TextDocumentSyncHandler(ILanguageServer router, BufferManager bufferManager, ParsedDocumentsManager documentsManager)
         {
             this._router = router;
             this._bufferManager = bufferManager;
+            this.documentsManager = documentsManager;
         }
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
         {
             return new TextDocumentChangeRegistrationOptions()
             {
-                DocumentSelector = _documentSelector,
+                DocumentSelector = DaedalusDefaults.DocumentSelector,
                 SyncKind = Change
             };
         }
@@ -65,61 +56,24 @@ namespace DemoLanguageServer.Services
             return Unit.Task;
         }
 
-        TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions()
-        {
-            return new TextDocumentRegistrationOptions()
-            {
-                DocumentSelector = _documentSelector,
-            };
-        }
+        TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions() => DaedalusDefaults.RegistrationOptions;
 
-        public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
-        {
-            return Unit.Task;
-        }
+        public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) => Unit.Task;
 
         public void SetCapability(SynchronizationCapability capability)
         {
             _capability = capability;
         }
-
         public void Parse(Uri uri, string text, CancellationToken cancellation)
         {
-            var workspaces = _router.Workspace.WorkspaceFolders().GetAwaiter().GetResult();
-            var path = uri.LocalPath;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && path.StartsWith("/"))
+            _bufferManager.UpdateBuffer(uri.AbsolutePath, text.ToCharArray());
+            var diags = documentsManager.Parse(uri, text, cancellation);
+            if (diags != null)
             {
-                path = Path.GetFullPath(path.Substring(1));
-            }
-            // Workaround: Skip externals. Too many wrong function definitions 
-            if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return;
-
-            _router.Window.LogInfo(path);
-            List<DaedalusCompiler.Compilation.Compiler.SyntaxError> parserResult = null;
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                parserResult = DaedalusCompiler.Compilation.Compiler.Load(path);
+                _router.Document.PublishDiagnostics(diags);
             }
             else
             {
-                parserResult = DaedalusCompiler.Compilation.Compiler.Parse(text);
-            }
-            if (parserResult.Count > 0)
-            {
-                _router.Document.PublishDiagnostics(new PublishDiagnosticsParams
-                {
-                    Uri = uri,
-                    Diagnostics = new Container<Diagnostic>(parserResult
-                        .Select(x => new Diagnostic
-                        {
-                            Message = x.Message,
-                            Range = new Range(new Position(x.Line - 1, x.Column), new Position(x.Line - 1, x.Column)),
-                        }))
-                });
-            }
-            else
-            {
-                // Clear diagnostics by sending emtpy container.
                 _router.Document.PublishDiagnostics(new PublishDiagnosticsParams { Uri = uri, Diagnostics = new Container<Diagnostic>() });
             }
         }
@@ -134,8 +88,8 @@ namespace DemoLanguageServer.Services
         {
             return new TextDocumentSaveRegistrationOptions()
             {
-                DocumentSelector = _documentSelector,
-                IncludeText = false,
+                DocumentSelector = DaedalusDefaults.DocumentSelector,
+                IncludeText = true,
             };
         }
 

@@ -5,7 +5,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DemoLanguageServer.Services
+namespace DaedalusLanguageServer.Services
 {
     public class DidChangeWorkspaceFoldersHandler : IDidChangeWorkspaceFoldersHandler
     {
