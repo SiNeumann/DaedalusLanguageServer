@@ -7,6 +7,13 @@ namespace DaedalusLanguageServer.Tests
     public class ParserTests
     {
         [TestMethod]
+        public void ParseInstance()
+        {
+            var parsed = Compiler.Parse(@"instance PC_Hero (NPC_DEFAULT) {};");
+
+        }
+
+        [TestMethod]
         public void ParseFileWithVariables()
         {
             var parsed = Compiler.Parse(@"const string NINJA_MANAREG_VERSION = ""ManaReg 1.1.0"";

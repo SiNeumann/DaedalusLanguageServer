@@ -1,4 +1,5 @@
 ﻿using DaedalusCompiler.Compilation;
+using DaedalusCompiler.Compilation.Symbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Concurrent;
@@ -12,8 +13,8 @@ namespace DaedalusLanguageServer
 {
     public class ParsedDocumentsManager
     {
-        private readonly ConcurrentDictionary<Uri, Compiler.ParseResult> LastParseResults
-            = new ConcurrentDictionary<Uri, Compiler.ParseResult>();
+        private readonly ConcurrentDictionary<Uri, ParseResult> LastParseResults
+            = new ConcurrentDictionary<Uri, ParseResult>();
 
         private readonly ConcurrentDictionary<Uri, ILookup<string, Symbol>> symbolsLookup
             = new ConcurrentDictionary<Uri, ILookup<string, Symbol>>();
@@ -21,7 +22,7 @@ namespace DaedalusLanguageServer
         public ParsedDocumentsManager()
         {}
 
-        public Compiler.ParseResult GetParseResult(Uri uri)
+        public ParseResult GetParseResult(Uri uri)
         {
             if (LastParseResults.TryGetValue(uri, out var val))
             {
@@ -30,7 +31,7 @@ namespace DaedalusLanguageServer
             return null;
         }
 
-        public void UpdateParseResult(Uri uri, Compiler.ParseResult parserResult)
+        public void UpdateParseResult(Uri uri, ParseResult parserResult)
         {
             LastParseResults.AddOrUpdate(uri, parserResult, (u, oldParse) => parserResult);
             var lookup = parserResult.GlobalClasses.Cast<Symbol>()
@@ -38,6 +39,7 @@ namespace DaedalusLanguageServer
                 .Concat(parserResult.GlobalFunctions)
                 .Concat(parserResult.GlobalPrototypes)
                 .Concat(parserResult.GlobalVariables)
+                .Concat(parserResult.GlobalInstances)
                 .ToLookup(c => c.Name.ToUpper());
 
             symbolsLookup.AddOrUpdate(uri, lookup, (uri, old) => lookup);
@@ -57,7 +59,7 @@ namespace DaedalusLanguageServer
             return null;
         }
 
-        public IReadOnlyDictionary<Uri, Compiler.ParseResult> GetDocuments()
+        public IReadOnlyDictionary<Uri, ParseResult> GetDocuments()
         {
             return LastParseResults;
         }
@@ -72,7 +74,7 @@ namespace DaedalusLanguageServer
             // Workaround: Skip externals. Too many wrong function definitions 
             if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return null;
 
-            Compiler.ParseResult parserResult = null;
+            ParseResult parserResult = null;
             if (string.IsNullOrWhiteSpace(text))
             {
                 parserResult = Compiler.Load(path);

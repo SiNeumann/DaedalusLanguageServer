@@ -1,9 +1,7 @@
-﻿using DaedalusCompiler.Compilation;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,41 +36,9 @@ namespace DaedalusLanguageServer.Services
                 return Task.FromResult<Hover>(null);
             }
 
-            string marked;
-            if (v is Function fv)
-            {
-                marked = $"func {fv.ReturnType} {fv.Name}({string.Join(", ", fv.Parameters.Select(x => $"var {x.Type} {x.Name}"))})";
-            }
-            else if (v is Class clv)
-            {
-                if (clv.Fields.Count > 0)
-                {
-                    marked = $"class {clv.Name} {{\n\t{string.Join("\t", clv.Fields.Select(x => $"var {x.Type} {x.Name};\n"))}}};";
-                }
-                else
-                {
-                    marked = $"class {clv.Name}";
-                }
-            }
-            else if (v is Prototype pv)
-            {
-                marked = $"prototype {pv.Name} ({pv.Parent})";
-            }
-            else if (v is Constant cv)
-            {
-                marked = $"const {cv.Type} {cv.Name} = {cv.Value}";
-            }
-            else if (v is Variable sv)
-            {
-                marked = $"var {sv.Type} {sv.Name}";
-            }
-            else
-            {
-                marked = v.Name;
-            }
             return Task.FromResult(new Hover
             {
-                Contents = new MarkedStringsOrMarkupContent(new MarkedString(DaedalusDefaults.Language, marked))
+                Contents = new MarkedStringsOrMarkupContent(new MarkedString(DaedalusDefaults.Language, v.ToString()))
             });
 
         }

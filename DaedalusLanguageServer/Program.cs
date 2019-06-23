@@ -1,17 +1,12 @@
-﻿using DaedalusCompiler.Compilation;
-using DaedalusLanguageServer.Services;
+﻿using DaedalusLanguageServer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DaedalusLanguageServer
@@ -42,8 +37,14 @@ namespace DaedalusLanguageServer
                     .WithHandler<HoverHandler>()
                     .WithHandler<InitializeHandler>()
                  );
-            ParseBuiltIns(server.Services.GetRequiredService<ParsedDocumentsManager>());
-
+            var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
+            ParseBuiltIns(docManager);
+            if (File.Exists("Gothic.src"))
+            {
+                var router = server.Services.GetRequiredService<OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer>();
+                var srcPath = Path.GetFullPath("Gothic.src");
+                await Task.Run(() => ParseSrc(srcPath, router, docManager));
+            }
             await server.WaitForExit;
         }
 
@@ -60,6 +61,16 @@ namespace DaedalusLanguageServer
             {
                 parsedDocumentsManager.Parse(new Uri(builtIn), File.ReadAllText(builtIn, Encoding.GetEncoding(1250)), default);
             }
+        }
+        private static void ParseSrc(string srcPath, OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, ParsedDocumentsManager parsedDocumentsManager)
+        {
+            router.Window.LogInfo("Parsing Gothic.Src (this might take a while)");
+            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath);
+            foreach (var parseResult in parseResults)
+            {
+                parsedDocumentsManager.UpdateParseResult(parseResult.Key, parseResult.Value);
+            }
+            router.Window.LogInfo($"Parsed {parseResults.Count} scripts");
         }
     }
 }
