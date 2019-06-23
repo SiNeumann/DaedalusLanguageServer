@@ -58,7 +58,8 @@ namespace DaedalusLanguageServer.Services
                 var c = contextLine[i];
                 if (!BufferedDocument.IsIdentifier(c))
                 {
-                    word = contextLine.Substring(i + 1, idxOfParen);
+                    var start = i + 1;
+                    word = contextLine.Substring(start, idxOfParen - start);
                     break;
                 }
             }
@@ -79,8 +80,8 @@ namespace DaedalusLanguageServer.Services
                         Label = func.ToString(),
                         Parameters = new Container<ParameterInformation>(func.Parameters.Select(x => new ParameterInformation
                         {
-                            Label = x.Name,
-                            Documentation = new StringOrMarkupContent(new MarkupContent { Kind = MarkupKind.Markdown, Value = x.ToString() }),
+                            Label = x.ToString(),
+                            Documentation = x.ToString(),
                         }))
                     }),
                     ActiveParameter = sigCtx.Count(x => x == ','),

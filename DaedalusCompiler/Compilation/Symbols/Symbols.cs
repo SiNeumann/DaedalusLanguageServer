@@ -26,6 +26,7 @@ namespace DaedalusCompiler.Compilation.Symbols
         public int Line { get; set; }
         public int Column { get; set; }
         public Uri Source { get; set; }
+        public string Documentation { get; set; }
 
         /// <summary>Returns the daedalus representation of the symbol</summary>
         public abstract override string ToString();
