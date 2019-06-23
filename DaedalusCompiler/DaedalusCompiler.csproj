@@ -7,11 +7,6 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="AntlrOutput\**" />
-    <EmbeddedResource Remove="AntlrOutput\**" />
-    <None Remove="AntlrOutput\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="DaedalusBuiltins\camera.d" />
     <EmbeddedResource Include="DaedalusBuiltins\camera.d">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -48,8 +43,5 @@
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.7.1.1" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="output" />
   </ItemGroup>
 </Project>
