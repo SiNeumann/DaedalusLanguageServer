@@ -125,13 +125,7 @@ namespace DaedalusCompiler.Compilation
 
         private void UpdateParserSymbolSource(ParseResult result)
         {
-            IEnumerable<Symbol> symbols = result.GlobalClasses;
-            symbols = symbols
-                .Concat(result.GlobalConstants)
-                .Concat(result.GlobalFunctions)
-                .Concat(result.GlobalInstances)
-                .Concat(result.GlobalPrototypes)
-                .Concat(result.GlobalVariables);
+            IEnumerable<Symbol> symbols = result.EnumerateSymbols();
             var src = result.Source;
             foreach (var symbol in symbols)
             {

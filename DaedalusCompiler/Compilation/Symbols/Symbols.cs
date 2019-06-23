@@ -19,26 +19,51 @@ namespace DaedalusCompiler.Compilation.Symbols
         public string Type { get; set; }
         public override string ToString() => $"var {Type} {Name}";
     }
-    public abstract class Symbol
+    public abstract class Symbol : IEqualityComparer<Symbol>
     {
+        public static readonly IEqualityComparer<Symbol> SameNameComparer = new SameNameEqualityComparer();
         public string Name { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
         public Uri Source { get; set; }
+
         /// <summary>Returns the daedalus representation of the symbol</summary>
         public abstract override string ToString();
+
+        #region IEqualityComparer<Symbol>
+
+        public override int GetHashCode() => HashCode.Combine(this.Name, this.Line, this.Column, this.Source);
+        public int GetHashCode(Symbol obj) => obj.GetHashCode();
+        public override bool Equals(object obj)
+        {
+            return obj is Symbol symbol && Equals(this, symbol);
+        }
+
+        public bool Equals(Symbol x, Symbol y)
+        {
+            if (x is null || y is null) return false;
+            return this.Name == y.Name &&
+                   this.Line == y.Line &&
+                   this.Column == y.Column &&
+                   EqualityComparer<Uri>.Default.Equals(this.Source, y.Source);
+        }
+
+        private class SameNameEqualityComparer : IEqualityComparer<Symbol>
+        {
+            public bool Equals(Symbol x, Symbol y)
+            {
+                if (x is null || y is null) return false;
+                return x.Name.Equals(y.Name, StringComparison.OrdinalIgnoreCase);
+            }
+            public int GetHashCode(Symbol obj) => HashCode.Combine(obj.Name);
+        }
+
+        #endregion
     }
     public class Class : Symbol
     {
         public List<Variable> Fields { get; set; }
-        public override string ToString()
-        {
-            if (Fields?.Count > 0)
-            {
-                return $"class {Name} {{\n\t{string.Join("\t", Fields)}}};";
-            }
-            return $"class {Name}";
-        }
+        public override string ToString() => $"class {Name}";
     }
     public class Prototype : Symbol
     {

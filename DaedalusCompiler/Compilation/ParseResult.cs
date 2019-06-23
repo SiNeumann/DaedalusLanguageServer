@@ -1,6 +1,7 @@
 ﻿using DaedalusCompiler.Compilation.Symbols;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DaedalusCompiler.Compilation
 {
@@ -14,5 +15,15 @@ namespace DaedalusCompiler.Compilation
         public List<Prototype> GlobalPrototypes { get; set; }
         public List<Instance> GlobalInstances { get; set; }
         public Uri Source { get; set; }
+
+        public IEnumerable<Symbol> EnumerateSymbols()
+        {
+            return GlobalClasses.Cast<Symbol>()
+                    .Concat(GlobalConstants)
+                    .Concat(GlobalFunctions)
+                    .Concat(GlobalInstances)
+                    .Concat(GlobalPrototypes)
+                    .Concat(GlobalVariables);
+        }
     }
 }
