@@ -36,6 +36,7 @@ namespace DaedalusLanguageServer
                     .WithHandler<CompletionHandler>()
                     .WithHandler<HoverHandler>()
                     .WithHandler<GoToDefinitionHandler>()
+                    .WithHandler<SignatureInfoHandler>()
                     .WithHandler<InitializeHandler>()
                  );
             var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
