@@ -339,4 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /Parser/.vscode
+/Parser/Output
 *.jar
