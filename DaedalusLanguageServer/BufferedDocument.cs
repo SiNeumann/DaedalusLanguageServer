@@ -47,7 +47,7 @@ namespace DaedalusLanguageServer
                 start++; // Skip the first bad char
             }
 
-            return string.Create(end - start, (doc, offset), (c, state) =>
+            return string.Create(end - start, (doc, offset: start), (c, state) =>
             {
                 for (var i = 0; i < c.Length; i++)
                 {
