@@ -25,7 +25,7 @@ namespace DaedalusLanguageServer.Services
             {
                 foreach (var c in doc.Value.GlobalConstants)
                 {
-                    var pos = new Position(c.Line, c.Column);
+                    var pos = new Position(c.Line-1, c.Column);
                     var symbol = new SymbolInformationOrDocumentSymbol(new DocumentSymbol
                     {
                         Kind = SymbolKind.Constant,
@@ -36,7 +36,7 @@ namespace DaedalusLanguageServer.Services
                 }
                 foreach (var v in doc.Value.GlobalVariables)
                 {
-                    var pos = new Position(v.Line, v.Column);
+                    var pos = new Position(v.Line - 1, v.Column);
                     var symbol = new SymbolInformationOrDocumentSymbol(new DocumentSymbol
                     {
                         Kind = SymbolKind.Variable,

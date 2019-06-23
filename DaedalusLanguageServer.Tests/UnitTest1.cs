@@ -7,10 +7,15 @@ namespace DaedalusLanguageServer.Tests
     public class ParserTests
     {
         [TestMethod]
+        public void ParseGothicSrc()
+        {
+            var parsed = Compiler.ParseSrc(@"A:\Spiele\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src");
+        }
+
+        [TestMethod]
         public void ParseInstance()
         {
             var parsed = Compiler.Parse(@"instance PC_Hero (NPC_DEFAULT) {};");
-
         }
 
         [TestMethod]

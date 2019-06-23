@@ -35,6 +35,7 @@ namespace DaedalusLanguageServer
                     .WithHandler<DocumentSymbolHandler>()
                     .WithHandler<CompletionHandler>()
                     .WithHandler<HoverHandler>()
+                    .WithHandler<GoToDefinitionHandler>()
                     .WithHandler<InitializeHandler>()
                  );
             var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
@@ -64,8 +65,11 @@ namespace DaedalusLanguageServer
         }
         private static void ParseSrc(string srcPath, OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, ParsedDocumentsManager parsedDocumentsManager)
         {
-            router.Window.LogInfo("Parsing Gothic.Src (this might take a while)");
-            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath);
+            var cpus = Environment.ProcessorCount;
+            if (cpus > 1) cpus--;
+            router.Window.LogInfo($"Parsing Gothic.Src using {cpus} threads. This might take a while.");
+            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath, cpus);
+
             foreach (var parseResult in parseResults)
             {
                 parsedDocumentsManager.UpdateParseResult(parseResult.Key, parseResult.Value);

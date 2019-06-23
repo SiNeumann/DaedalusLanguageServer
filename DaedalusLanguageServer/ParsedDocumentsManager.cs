@@ -81,7 +81,7 @@ namespace DaedalusLanguageServer
             }
             else
             {
-                parserResult = Compiler.Parse(text);
+                parserResult = Compiler.Parse(text, uri);
             }
             if (parserResult.SyntaxErrors.Count > 0)
             {

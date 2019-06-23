@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer", "DaedalusLanguageServer.csproj", "{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "C:\Users\johnh\Desktop\ros\DaedalusCompiler\src\DaedalusCompiler\DaedalusCompiler.csproj", "{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer.Tests", "..\DaedalusLanguageServer.Tests\DaedalusLanguageServer.Tests.csproj", "{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaedalusLanguageServer.Tests", "..\DaedalusLanguageServer.Tests\DaedalusLanguageServer.Tests.csproj", "{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "..\DaedalusCompiler\DaedalusCompiler.csproj", "{6381DBB9-5B34-49DE-BC6D-C93235BF7022}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +19,14 @@ Global
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D46B1D5-9972-4C99-9EC0-985BB48AA9A8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

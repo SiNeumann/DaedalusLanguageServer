@@ -14,8 +14,4 @@
     <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.12.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="C:\Users\johnh\Desktop\ros\DaedalusCompiler\src\DaedalusCompiler\DaedalusCompiler.csproj" />
-  </ItemGroup>
-
 </Project>
