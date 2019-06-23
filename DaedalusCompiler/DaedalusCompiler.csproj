@@ -7,10 +7,11 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Parser\Output\DaedalusBaseListener.cs" Link="AntlrOutput\DaedalusBaseListener.cs" />
-    <Compile Include="..\Parser\Output\DaedalusLexer.cs" Link="AntlrOutput\DaedalusLexer.cs" />
-    <Compile Include="..\Parser\Output\DaedalusListener.cs" Link="AntlrOutput\DaedalusListener.cs" />
-    <Compile Include="..\Parser\Output\DaedalusParser.cs" Link="AntlrOutput\DaedalusParser.cs" />
+    <Compile Remove="AntlrOutput\**" />
+    <EmbeddedResource Remove="AntlrOutput\**" />
+    <None Remove="AntlrOutput\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="DaedalusBuiltins\camera.d" />
     <EmbeddedResource Include="DaedalusBuiltins\camera.d">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -49,7 +50,6 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="AntlrOutput\" />
     <Folder Include="output" />
   </ItemGroup>
 </Project>
