@@ -13,12 +13,12 @@ namespace DaedalusCompiler.Compilation
     {
         public static ParseResult Load(string filename)
         {
-            var compiler = new Compiler(verbose: false);
+            var compiler = new Compiler();
             return compiler.LoadFile(filename);
         }
         public static ParseResult Parse(string code, Uri src = null)
         {
-            var compiler = new Compiler(verbose: false);
+            var compiler = new Compiler();
             var result = compiler.ParseText(code);
             if (src != null)
             {
@@ -29,13 +29,13 @@ namespace DaedalusCompiler.Compilation
         }
         public static Dictionary<Uri, ParseResult> ParseSrc(string srcPath)
         {
-            var compiler = new Compiler(verbose: false);
+            var compiler = new Compiler();
             return compiler.ParseSrcInternal(srcPath, 1);
         }
 
         public static Dictionary<Uri, ParseResult> ParseSrc(string srcPath, int maxConcurrency)
         {
-            var compiler = new Compiler(verbose: false);
+            var compiler = new Compiler();
             return compiler.ParseSrcInternal(srcPath, maxConcurrency);
         }
 
