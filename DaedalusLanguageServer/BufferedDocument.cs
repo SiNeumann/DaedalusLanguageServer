@@ -55,6 +55,39 @@ namespace DaedalusLanguageServer
                 }
             });
         }
+
+        public string GetLine(Position center)
+        {
+            var doc = Document;
+            Span<char> c = doc;
+            var currentLine = 0;
+            var offset = 0;
+            var line = center.Line;
+            while (currentLine < line)
+            {
+                currentLine++;
+                var lineEnd = c.IndexOf('\n');
+                if (lineEnd != -1)
+                {
+                    offset += lineEnd;
+                    if (c.Length < lineEnd + 1) break;
+                    offset++;
+                    c = c.Slice(lineEnd + 1);
+                }
+            }
+            var end = c.IndexOf('\n');
+            if (end == -1)
+            {
+                return new string(c);
+            }
+            var rIdx = c.IndexOf('\r');
+            if (rIdx != -1 && rIdx < end)
+            {
+                end = rIdx;
+            }
+            return new string(c.Slice(0, end));
+        }
+
         private static bool IsIdentifier(char c)
         {
             return char.IsLetterOrDigit(c) || c == '_' || c == '@' || c == '^';
