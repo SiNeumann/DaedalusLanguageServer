@@ -58,7 +58,11 @@ namespace DaedalusLanguageServer.Services
 
         TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions() => DaedalusDefaults.RegistrationOptions;
 
-        public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken) => Unit.Task;
+        public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
+        {
+            _bufferManager.UpdateBuffer(request.TextDocument.Uri.AbsolutePath, null);
+            return Unit.Task;
+        }
 
         public void SetCapability(SynchronizationCapability capability)
         {
