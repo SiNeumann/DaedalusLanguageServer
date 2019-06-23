@@ -88,7 +88,7 @@ namespace DaedalusLanguageServer
             return new string(c.Slice(0, end));
         }
 
-        private static bool IsIdentifier(char c)
+        public static bool IsIdentifier(char c)
         {
             return char.IsLetterOrDigit(c) || c == '_' || c == '@' || c == '^';
         }
