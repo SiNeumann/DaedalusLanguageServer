@@ -16,8 +16,8 @@ namespace DaedalusLanguageServer
 
         public string GetWordRangeAtPosition(Position position)
         {
-            var ca = Document;
-            Span<char> c = ca;
+            var doc = Document;
+            Span<char> c = doc;
             var currentLine = 0;
             var offset = 0;
             var wordLine = position.Line;
@@ -39,20 +39,19 @@ namespace DaedalusLanguageServer
             var start = center;
             var end = center;
 
-            while (IsIdentifier(ca[start])) start--;
-            while (IsIdentifier(ca[end])) end++;
+            while (IsIdentifier(doc[start])) start--;
+            while (IsIdentifier(doc[end])) end++;
 
             if (start < center)
             {
                 start++; // Skip the first bad char
             }
 
-            return string.Create(end - start, (ca, start, end), (c, state) =>
+            return string.Create(end - start, (doc, offset), (c, state) =>
             {
-                var len = state.end - state.start;
-                for (var i = 0; i < len; i++)
+                for (var i = 0; i < c.Length; i++)
                 {
-                    c[i] = state.ca[state.start + i];
+                    c[i] = state.doc[state.offset + i];
                 }
             });
         }
