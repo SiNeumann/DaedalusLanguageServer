@@ -4,9 +4,11 @@ using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace DaedalusLanguageServer
@@ -58,12 +60,33 @@ namespace DaedalusLanguageServer
 
         private static void ParseBuiltIns(ParsedDocumentsManager parsedDocumentsManager)
         {
+            var symbolInfoPath = Path.Combine(AppDir, "DaedalusBuiltins", "symbols.json");
+            Dictionary<string, string> documentations = null;
+            if (File.Exists(symbolInfoPath))
+            {
+                var symbolInfos = JsonSerializer.Parse<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
+                documentations = symbolInfos.ToDictionary(x => x.Name, x => x.Documentation, StringComparer.OrdinalIgnoreCase);
+            }
+
             var buildInsPath = Path.Combine(AppDir, "DaedalusBuiltins");
             foreach (var builtIn in Directory.EnumerateFiles(buildInsPath, "*.d"))
             {
-                parsedDocumentsManager.Parse(new Uri(builtIn), File.ReadAllText(builtIn, Encoding.GetEncoding(1250)), default);
+                var builtInUri = new Uri(builtIn);
+                parsedDocumentsManager.Parse(builtInUri, File.ReadAllText(builtIn, Encoding.GetEncoding(1250)), default);
+                var parsedResult = parsedDocumentsManager.GetParseResult(builtInUri);
+                if (documentations != null)
+                {
+                    foreach (var symbol in parsedResult.EnumerateSymbols())
+                    {
+                        if (documentations.TryGetValue(symbol.Name, out var d))
+                        {
+                            symbol.Documentation = d;
+                        }
+                    }
+                }
             }
         }
+
         private static void ParseSrc(string srcPath, OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, ParsedDocumentsManager parsedDocumentsManager)
         {
             var cpus = Environment.ProcessorCount;

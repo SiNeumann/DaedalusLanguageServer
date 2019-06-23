@@ -81,8 +81,8 @@ namespace DaedalusLanguageServer.Services
                         Parameters = new Container<ParameterInformation>(func.Parameters.Select(x => new ParameterInformation
                         {
                             Label = x.ToString(),
-                            Documentation = x.ToString(),
-                        }))
+                        })),
+                        Documentation = func.Documentation,
                     }),
                     ActiveParameter = sigCtx.Count(x => x == ','),
                     ActiveSignature = 0
