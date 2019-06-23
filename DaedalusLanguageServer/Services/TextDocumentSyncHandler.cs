@@ -23,12 +23,12 @@ namespace DaedalusLanguageServer.Services
 
         public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
         {
-            var documentPath = request.TextDocument.Uri.ToString();
+            var documentPath = request.TextDocument.Uri.AbsolutePath;
             var text = request.ContentChanges.FirstOrDefault()?.Text;
             _bufferManager.UpdateBuffer(documentPath, text.ToCharArray());
 
             _router.Window.LogInfo($"Updated buffer for document: {documentPath} ({text.Length} chars)");
-
+            Parse(request.TextDocument.Uri, text, cancellationToken);
             return Unit.Task;
         }
         public TextDocumentSyncHandler(ILanguageServer router, BufferManager bufferManager, ParsedDocumentsManager documentsManager)
