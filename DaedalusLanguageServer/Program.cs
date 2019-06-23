@@ -74,6 +74,26 @@ namespace DaedalusLanguageServer
             {
                 parsedDocumentsManager.UpdateParseResult(parseResult.Key, parseResult.Value);
             }
+            foreach (var kvp in parseResults)
+            {
+                if (kvp.Value.SyntaxErrors.Count > 0)
+                {
+                    router.Document.PublishDiagnostics(new OmniSharp.Extensions.LanguageServer.Protocol.Models.PublishDiagnosticsParams
+                    {
+                        Uri = kvp.Key,
+                        Diagnostics = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Container<OmniSharp.Extensions.LanguageServer.Protocol.Models.Diagnostic>(
+                            kvp.Value.SyntaxErrors.Select(x => new OmniSharp.Extensions.LanguageServer.Protocol.Models.Diagnostic
+                            {
+                                Severity = OmniSharp.Extensions.LanguageServer.Protocol.Models.DiagnosticSeverity.Error,
+                                Message = x.Message,
+                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                                            new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column),
+                                            new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column)
+                                        )
+                            }))
+                    });
+                }
+            }
             router.Window.LogInfo($"Parsed {parseResults.Count} scripts");
         }
     }
