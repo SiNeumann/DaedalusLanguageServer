@@ -38,10 +38,11 @@ namespace DaedalusLanguageServer.Services
             var doc = bufferManager.GetBuffer(request.TextDocument.Uri.AbsolutePath);
             if (doc == null) return null;
 
-            var line = doc.GetLine(request.Position);
+            var line = doc.GetMethodCall(request.Position).Trim();
             if (rxFuncDef.IsMatch(line)) return null;
 
-            var contextLine = line.Substring(0, (int)request.Position.Character);
+            var contextLine = line;
+
             contextLine = rxStringValues.Replace(contextLine, "");
 
             var oldLen = -1;
@@ -52,6 +53,8 @@ namespace DaedalusLanguageServer.Services
             }
 
             var idxOfParen = contextLine.LastIndexOf('(');
+            if (idxOfParen < 0) return null;
+
             string word = null;
             for (var i = idxOfParen - 1; i > 0; i--)
             {

@@ -1,5 +1,6 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
+using System.Text;
 
 namespace DaedalusLanguageServer
 {
@@ -55,7 +56,38 @@ namespace DaedalusLanguageServer
                 }
             });
         }
-
+        public string GetMethodCall(Position center)
+        {
+            Span<char> doc = Document;
+            var c = doc;
+            var currentLine = 0;
+            var offset = 0;
+            var line = center.Line;
+            while (currentLine < line)
+            {
+                currentLine++;
+                var lineEnd = c.IndexOf('\n');
+                if (lineEnd != -1)
+                {
+                    offset += lineEnd;
+                    if (c.Length < lineEnd + 1) break;
+                    offset++;
+                    c = c.Slice(lineEnd + 1);
+                }
+            }
+            offset += center.Character > 0 ? (int)center.Character - 1 : 0;
+            // combine all text that precede the center position
+            var sb = new StringBuilder();
+            int o = offset;
+            while (o >= 0)
+            {
+                var token = doc[o--];
+                if (token == ';' || token == '}') break;
+                if (token == '\n' || token == '\r') continue;
+                sb.Insert(0, token);
+            }
+            return sb.ToString();
+        }
         public string GetLine(Position center)
         {
             var doc = Document;
