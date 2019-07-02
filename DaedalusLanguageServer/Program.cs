@@ -1,4 +1,5 @@
-﻿using DaedalusLanguageServer.Services;
+﻿using DaedalusLanguageServerLib;
+using DaedalusLanguageServerLib.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;

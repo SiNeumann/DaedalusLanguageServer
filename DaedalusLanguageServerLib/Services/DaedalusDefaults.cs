@@ -1,6 +1,6 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace DaedalusLanguageServer.Services
+namespace DaedalusLanguageServerLib.Services
 {
     public static class DaedalusDefaults
     {

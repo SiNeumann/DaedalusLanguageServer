@@ -1,4 +1,4 @@
-﻿namespace DaedalusLanguageServer
+﻿namespace DaedalusLanguageServerLib
 {
     public partial class LanguageServerSession
     {

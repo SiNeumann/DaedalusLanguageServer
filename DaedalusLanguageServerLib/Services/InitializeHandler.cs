@@ -4,7 +4,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DaedalusLanguageServer.Services
+namespace DaedalusLanguageServerLib.Services
 {
     public class InitializeHandler : IInitializeHandler
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace DaedalusLanguageServer
+namespace DaedalusLanguageServerLib
 {
     public class BufferManager
     {

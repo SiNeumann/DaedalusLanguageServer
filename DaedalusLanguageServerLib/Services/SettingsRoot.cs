@@ -1,6 +1,6 @@
-﻿using static DaedalusLanguageServer.LanguageServerSession;
+﻿using static DaedalusLanguageServerLib.LanguageServerSession;
 
-namespace DaedalusLanguageServer.Services
+namespace DaedalusLanguageServerLib.Services
 {
     public class SettingsRoot
     {

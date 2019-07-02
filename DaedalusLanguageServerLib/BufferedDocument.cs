@@ -2,7 +2,7 @@
 using System;
 using System.Text;
 
-namespace DaedalusLanguageServer
+namespace DaedalusLanguageServerLib
 {
     public class BufferedDocument
     {
@@ -18,7 +18,7 @@ namespace DaedalusLanguageServer
         public string GetWordRangeAtPosition(Position position)
         {
             var doc = Document;
-            Span<char> c = doc;
+            Span<char> docSlice = doc;
             var currentLine = 0;
             var offset = 0;
             var wordLine = position.Line;
@@ -26,13 +26,13 @@ namespace DaedalusLanguageServer
             while (currentLine < wordLine)
             {
                 currentLine++;
-                var lineEnd = c.IndexOf('\n');
+                var lineEnd = docSlice.IndexOf('\n');
                 if (lineEnd != -1)
                 {
                     offset += lineEnd;
-                    if (c.Length < lineEnd + 1) break;
+                    if (docSlice.Length < lineEnd + 1) break;
                     offset++;
-                    c = c.Slice(lineEnd + 1);
+                    docSlice = docSlice.Slice(lineEnd + 1);
                 }
             }
 

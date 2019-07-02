@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DaedalusLanguageServer.Services
+namespace DaedalusLanguageServerLib.Services
 {
     public class CompletionHandler : ICompletionHandler
     {

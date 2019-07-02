@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "..\DaedalusCompiler\DaedalusCompiler.csproj", "{6381DBB9-5B34-49DE-BC6D-C93235BF7022}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaedalusLanguageServerLib", "..\DaedalusLanguageServerLib\DaedalusLanguageServerLib.csproj", "{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6381DBB9-5B34-49DE-BC6D-C93235BF7022}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

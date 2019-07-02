@@ -9,7 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace DaedalusLanguageServer
+namespace DaedalusLanguageServerLib
 {
     public class ParsedDocumentsManager
     {
@@ -64,7 +64,7 @@ namespace DaedalusLanguageServer
             var lookup = parserResult.EnumerateSymbols()
                 .ToLookup(c => c.Name.ToUpper());
 
-            symbolsLookup.AddOrUpdate(uri, lookup, (uri, old) => lookup);
+            symbolsLookup.AddOrUpdate(uri, lookup, (key, old) => lookup);
             UpdateSymbolCompletions(uri);
         }
 
@@ -116,7 +116,16 @@ namespace DaedalusLanguageServer
             return LastParseResults;
         }
 
+        public PublishDiagnosticsParams ParseDetailed(Uri uri, string text, CancellationToken cancellation)
+        {
+            return ParseInternal(uri, text, true, cancellation);
+        }
         public PublishDiagnosticsParams Parse(Uri uri, string text, CancellationToken cancellation)
+        {
+            return ParseInternal(uri, text, false, cancellation);
+        }
+
+        private PublishDiagnosticsParams ParseInternal(Uri uri, string text, bool detailed, CancellationToken cancellation)
         {
             var path = uri.LocalPath;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && path.StartsWith("/"))
@@ -129,11 +138,11 @@ namespace DaedalusLanguageServer
             ParseResult parserResult = null;
             if (string.IsNullOrWhiteSpace(text))
             {
-                parserResult = Compiler.Load(path);
+                parserResult = Compiler.Load(path, detailed);
             }
             else
             {
-                parserResult = Compiler.Parse(text, uri);
+                parserResult = Compiler.Parse(text, uri, detailed);
             }
             if (parserResult.SyntaxErrors.Count > 0)
             {
