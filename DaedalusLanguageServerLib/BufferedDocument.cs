@@ -63,30 +63,50 @@ namespace DaedalusLanguageServerLib
             var currentLine = 0;
             var offset = 0;
             var line = center.Line;
-            while (currentLine < line)
+            while (currentLine < line && offset < doc.Length)
             {
                 currentLine++;
                 var lineEnd = c.IndexOf('\n');
-                if (lineEnd != -1)
-                {
-                    offset += lineEnd;
-                    if (c.Length < lineEnd + 1) break;
-                    offset++;
-                    c = c.Slice(lineEnd + 1);
-                }
+                if (lineEnd == -1) break;
+
+                offset += lineEnd;
+                if (c.Length < lineEnd + 1) break;
+                offset++;
+                c = c.Slice(lineEnd + 1);
             }
-            offset += center.Character > 0 ? (int)center.Character - 1 : 0;
+            offset += center.Character > 0 ? (int)center.Character : 0;
             // combine all text that precede the center position
-            var sb = new StringBuilder();
             int o = offset;
+            int skipOpen = 1;
             while (o >= 0)
             {
                 var token = doc[o--];
                 if (token == ';' || token == '}') break;
+                if (token == '(' && skipOpen <= 0) break;
+                if (token == ')')
+                {
+                    skipOpen++; continue;
+                }
+                if (token == '(')
+                {
+                    skipOpen--; continue;
+                }
                 if (token == '\n' || token == '\r') continue;
-                sb.Insert(0, token);
             }
-            return sb.ToString();
+            if (o + 1 > doc.Length)
+            {
+                return new string(doc.Slice(o));
+            }
+            var result = doc.Slice(o + 2, offset - o - 2);
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (!char.IsWhiteSpace(result[i]))
+                {
+                    result = result.Slice(i);
+                    break;
+                }
+            }
+            return new string(result);
         }
         public string GetLine(Position center)
         {

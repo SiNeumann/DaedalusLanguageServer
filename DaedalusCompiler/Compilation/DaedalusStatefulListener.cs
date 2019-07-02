@@ -1,9 +1,80 @@
 ﻿using Antlr4.Runtime.Misc;
 using DaedalusCompiler.Compilation.Symbols;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DaedalusCompiler.Compilation
 {
+    public class DaedalusStatefulDetailedParseTreeListener : DaedalusStatefulParseTreeListener
+    {
+        public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
+        {
+            base.EnterFunctionDef(context);
+            var statements = new List<Statement>();
+
+            AddStatementsFromBlock(statements, context.statementBlock());
+            CurrentFunctionDef.Statements = statements;
+        }
+
+        private void AddStatementsFromIf(List<Statement> target, DaedalusParser.IfBlockStatementContext context)
+        {
+            var ifStmt = context.ifBlock().statementBlock();
+            if (ifStmt != null)
+            {
+                AddStatementsFromBlock(target, ifStmt);
+            }
+            foreach (var elseIfStmt in context.elseIfBlock())
+            {
+                AddStatementsFromBlock(target, elseIfStmt.statementBlock());
+            }
+
+            var elseStmt = context.elseBlock()?.statementBlock();
+            if (elseStmt != null)
+            {
+                AddStatementsFromBlock(target, elseStmt);
+            }
+        }
+        private void AddStatementsFromBlock(List<Statement> target, DaedalusParser.StatementBlockContext statementBlock)
+        {
+            if (statementBlock.statement() != null)
+            {
+                AddStatements(target, statementBlock.statement());
+            }
+            if (statementBlock.ifBlockStatement() != null)
+            {
+                foreach (var ifStmt in statementBlock.ifBlockStatement())
+                {
+                    AddStatementsFromIf(target, ifStmt);
+                }
+            }
+        }
+        private void AddStatements(List<Statement> target, IEnumerable<DaedalusParser.StatementContext> statements)
+        {
+            foreach (var stmt in statements)
+            {
+                target.Add(new Statement
+                {
+                    Definition = new Defintion
+                    {
+                        Start = new DefinitionIndex(stmt.Start.Line, stmt.Start.Column),
+                        End = new DefinitionIndex(stmt.Stop.Line, stmt.Stop.Column),
+                    },
+                    Text = stmt.GetText()
+                });
+            }
+        }
+        public override void ExitFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
+        {
+            var currentFunc = CurrentFunctionDef;
+            CurrentFunctionDef = null;
+
+            if (currentFunc != null)
+            {
+                currentFunc.Definition.End = new DefinitionIndex(context.Stop.Line, context.Stop.Column);
+            }
+        }
+    }
+
     public class DaedalusStatefulParseTreeListener : DaedalusBaseListener
     {
         public List<Variable> GlobalVars { get; } = new List<Variable>();
@@ -12,7 +83,9 @@ namespace DaedalusCompiler.Compilation
         public List<Class> GlobalClasses { get; } = new List<Class>();
         public List<Prototype> GlobalPrototypes { get; } = new List<Prototype>();
         public List<Instance> GlobalInstances { get; } = new List<Instance>();
-        
+
+        protected Function CurrentFunctionDef;
+
 
         public override void EnterInlineDef([NotNull] DaedalusParser.InlineDefContext context)
         {
@@ -24,38 +97,38 @@ namespace DaedalusCompiler.Compilation
             AddGlobalsBlockDef(context);
         }
 
-        private void AddGlobalsBlockDef(Antlr4.Runtime.ParserRuleContext ruleContext)
+        public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
-            // Functions
-
-            var allFuncDefs = ruleContext.GetRuleContexts<DaedalusParser.FunctionDefContext>();
-            foreach (var fd in allFuncDefs)
+            var fd = context;
+            var p = new List<Variable>();
+            var funcParameters = fd.parameterList().parameterDecl();
+            if (funcParameters != null)
             {
-                var p = new List<Variable>();
-                var funcParameters = fd.parameterList().parameterDecl();
-                if (funcParameters != null)
+                foreach (var pdef in funcParameters)
                 {
-                    foreach (var pdef in funcParameters)
+                    p.Add(new Variable
                     {
-                        p.Add(new Variable
-                        {
-                            Name = pdef.nameNode().GetText(),
-                            Type = pdef.typeReference().GetText(),
-                            Column = pdef.nameNode().Start.Column,
-                            Line = pdef.nameNode().Start.Line,
-                        });
-                    }
+                        Name = pdef.nameNode().GetText(),
+                        Type = pdef.typeReference().GetText(),
+                        Column = pdef.nameNode().Start.Column,
+                        Line = pdef.nameNode().Start.Line,
+                    });
                 }
-                GlobalFunctions.Add(new Function
-                {
-                    Name = fd.nameNode().GetText(),
-                    ReturnType = fd.typeReference().GetText(),
-                    Line = fd.nameNode().Start.Line,
-                    Column = fd.nameNode().Start.Column,
-                    Parameters = p,
-                });
             }
 
+            GlobalFunctions.Add(CurrentFunctionDef = new Function
+            {
+                Name = fd.nameNode().GetText(),
+                ReturnType = fd.typeReference().GetText(),
+                Line = fd.nameNode().Start.Line,
+                Column = fd.nameNode().Start.Column,
+                Parameters = p,
+                Definition = new Defintion { Start = new DefinitionIndex(fd.Start.Line, fd.Start.Column) }
+            });
+        }
+
+        private void AddGlobalsBlockDef(Antlr4.Runtime.ParserRuleContext ruleContext)
+        {
             // Classes
 
             var allClassDefs = ruleContext.GetRuleContexts<DaedalusParser.ClassDefContext>();

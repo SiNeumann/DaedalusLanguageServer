@@ -11,15 +11,15 @@ namespace DaedalusCompiler.Compilation
 {
     public partial class Compiler
     {
-        public static ParseResult Load(string filename)
+        public static ParseResult Load(string filename, bool detailed = false)
         {
             var compiler = new Compiler();
-            return compiler.LoadFile(filename);
+            return compiler.LoadFile(filename, detailed);
         }
-        public static ParseResult Parse(string code, Uri src = null)
+        public static ParseResult Parse(string code, Uri src = null, bool detailed = false)
         {
             var compiler = new Compiler();
-            var result = compiler.ParseText(code);
+            var result = compiler.ParseText(code, detailed);
             if (src != null)
             {
                 result.Source = src;
@@ -39,18 +39,18 @@ namespace DaedalusCompiler.Compilation
             return compiler.ParseSrcInternal(srcPath, maxConcurrency);
         }
 
-        private ParseResult LoadFile(string filename)
+        private ParseResult LoadFile(string filename, bool detailed = false)
         {
             var fileContent = GetFileContent(filename);
-            var result = ParseText(fileContent);
+            var result = ParseText(fileContent, detailed);
             result.Source = new Uri(filename);
             return result;
         }
 
-        private ParseResult LoadFile(Uri filename)
+        private ParseResult LoadFile(Uri filename, bool detailed = false)
         {
             var fileContent = GetFileContent(filename.LocalPath);
-            var result = ParseText(fileContent);
+            var result = ParseText(fileContent, detailed);
             result.Source = filename;
             UpdateParserSymbolSource(result);
             return result;
@@ -63,7 +63,7 @@ namespace DaedalusCompiler.Compilation
                 => SyntaxErrors.Add(new SyntaxError { Message = msg, Column = charPositionInLine, Line = line });
         }
 
-        private ParseResult ParseText(string fileContent)
+        private ParseResult ParseText(string fileContent, bool detailed = false)
         {
             using (var sw = new StringWriter())
             {
@@ -71,7 +71,7 @@ namespace DaedalusCompiler.Compilation
                 var parser = GetParserForText(fileContent, TextWriter.Null, sw);
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
-                var listener = new DaedalusStatefulParseTreeListener();
+                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener() : new DaedalusStatefulParseTreeListener();
                 ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
 
                 return new ParseResult

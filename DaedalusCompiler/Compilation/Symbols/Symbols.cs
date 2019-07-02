@@ -12,7 +12,18 @@ namespace DaedalusCompiler.Compilation.Symbols
     {
         public string ReturnType { get; set; }
         public List<Variable> Parameters { get; set; }
+        public List<Statement> Statements { get; set; }
         public override string ToString() => $"func {ReturnType} {Name}({string.Join(", ", Parameters)})";
+    }
+
+    public class Statement
+    {
+        public Defintion Definition { get; set; }
+        public string Text { get; set; }
+    }
+    public class FunctionCallStatement : Statement
+    {
+        public string Function { get; set; }
     }
     public class Variable : Symbol
     {
@@ -27,6 +38,7 @@ namespace DaedalusCompiler.Compilation.Symbols
         public int Column { get; set; }
         public Uri Source { get; set; }
         public string Documentation { get; set; }
+        public Defintion Definition { get; set; }
 
         /// <summary>Returns the daedalus representation of the symbol</summary>
         public abstract override string ToString();
@@ -75,5 +87,26 @@ namespace DaedalusCompiler.Compilation.Symbols
     public class Instance : Prototype
     {
         public override string ToString() => $"instance {Name} ({Parent})";
+    }
+
+    public class Defintion
+    {
+        public DefinitionIndex Start { get; set; }
+        public DefinitionIndex End { get; set; }
+
+        public override string ToString() => $"Start: {Start} | End: {End}";
+    }
+
+    public struct DefinitionIndex
+    {
+        public readonly int Line;
+        public readonly int Column;
+        public DefinitionIndex(int line, int column)
+        {
+            this.Line = line;
+            this.Column = column;
+        }
+
+        public override string ToString() => $"Line: {Line}:{Column}";
     }
 }
