@@ -31,7 +31,9 @@ namespace DaedalusLanguageServerLib.Services
         }
         private Regex rxFuncDef = new Regex(@"^\s*func\s+", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
         private Regex rxStringValues = new Regex(@"("".*? ""|'.*?')", RegexOptions.Compiled);
-        private Regex rxFuncCall = new Regex(@"\([\w@^_,:""'=\s]*\)", RegexOptions.Compiled);
+        private Regex rxFuncCall = new Regex(@"\([\w@^_,:\/""'=\s\[\]]*\)", RegexOptions.Compiled);
+
+        private static readonly Task<SignatureHelp> NullSignatureHelp = Task.FromResult<SignatureHelp>(null);
 
         public Task<SignatureHelp> Handle(SignatureHelpParams request, CancellationToken cancellationToken)
         {
@@ -53,7 +55,7 @@ namespace DaedalusLanguageServerLib.Services
             }
 
             var idxOfParen = contextLine.LastIndexOf('(');
-            if (idxOfParen < 0) return null;
+            if (idxOfParen < 0) return NullSignatureHelp;
 
             string word = null;
             for (var i = idxOfParen - 1; i > 0; i--)
@@ -93,7 +95,7 @@ namespace DaedalusLanguageServerLib.Services
                 return Task.FromResult(signatureHelp);
 
             }
-            return null;
+            return NullSignatureHelp;
         }
 
         public void SetCapability(SignatureHelpCapability capability)
