@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DaedalusCompiler.Compilation
@@ -41,16 +42,12 @@ namespace DaedalusCompiler.Compilation
 
         private ParseResult LoadFile(string filename, bool detailed = false)
         {
-            var fileContent = GetFileContent(filename);
-            var result = ParseText(fileContent, detailed);
-            result.Source = new Uri(filename);
-            return result;
+            return LoadFile(new Uri(filename), detailed);
         }
 
         private ParseResult LoadFile(Uri filename, bool detailed = false)
         {
-            var fileContent = GetFileContent(filename.LocalPath);
-            var result = ParseText(fileContent, detailed);
+            var result = ParseFile(filename.LocalPath, Encoding.GetEncoding(1250), detailed);
             result.Source = filename;
             UpdateParserSymbolSource(result);
             return result;
@@ -87,11 +84,36 @@ namespace DaedalusCompiler.Compilation
             }
         }
 
+        private ParseResult ParseFile(string filename, Encoding encoding, bool detailed = false)
+        {
+            using (var sw = new StringWriter())
+            using (var sr = new StreamReader(filename, encoding))
+            {
+                var errors = new List<SyntaxError>();
+                var parser = GetParserForStream(sr, TextWriter.Null, sw);
+                var errListener = new SyntaxErrorListener();
+                parser.AddErrorListener(errListener);
+                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener() : new DaedalusStatefulParseTreeListener();
+                ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
+
+                return new ParseResult
+                {
+                    SyntaxErrors = errListener.SyntaxErrors,
+                    GlobalConstants = listener.GlobalConsts,
+                    GlobalVariables = listener.GlobalVars,
+                    GlobalFunctions = listener.GlobalFunctions,
+                    GlobalClasses = listener.GlobalClasses,
+                    GlobalPrototypes = listener.GlobalPrototypes,
+                    GlobalInstances = listener.GlobalInstances,
+                };
+            }
+        }
+
         private Dictionary<Uri, ParseResult> ParseSrcInternal(string srcPath, int maxConcurrency = 1)
         {
             var parseResults = new Dictionary<Uri, ParseResult>();
             var absoluteSrcFilePath = Path.GetFullPath(srcPath);
-            if (maxConcurrency == 1)
+            if (maxConcurrency <= 1)
             {
                 foreach (var f in SrcFileHelper.LoadScriptsFilePaths(absoluteSrcFilePath))
                 {
@@ -116,6 +138,14 @@ namespace DaedalusCompiler.Compilation
         }
 
         private DaedalusParser GetParserForText(string input, TextWriter output, TextWriter errorOutput)
+        {
+            var inputStream = new AntlrInputStream(input);
+            var lexer = new DaedalusLexer(inputStream, output, errorOutput);
+            var commonTokenStream = new CommonTokenStream(lexer);
+            return new DaedalusParser(commonTokenStream, output, errorOutput);
+        }
+
+        private DaedalusParser GetParserForStream(TextReader input, TextWriter output, TextWriter errorOutput)
         {
             var inputStream = new AntlrInputStream(input);
             var lexer = new DaedalusLexer(inputStream, output, errorOutput);
