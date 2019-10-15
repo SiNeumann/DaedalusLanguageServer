@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer", "DaedalusLanguageServer.csproj", "{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer", "DaedalusLanguageServer\DaedalusLanguageServer.csproj", "{8CBFB131-AE78-4460-A1CB-2F875DC7E85E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer.Tests", "..\DaedalusLanguageServer.Tests\DaedalusLanguageServer.Tests.csproj", "{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusLanguageServer.Tests", "DaedalusLanguageServer.Tests\DaedalusLanguageServer.Tests.csproj", "{DC6BB37E-A870-43E3-B3AF-03AD68B4989A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "..\DaedalusCompiler\DaedalusCompiler.csproj", "{6381DBB9-5B34-49DE-BC6D-C93235BF7022}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaedalusCompiler", "DaedalusCompiler\DaedalusCompiler.csproj", "{6381DBB9-5B34-49DE-BC6D-C93235BF7022}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaedalusLanguageServerLib", "..\DaedalusLanguageServerLib\DaedalusLanguageServerLib.csproj", "{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaedalusLanguageServerLib", "DaedalusLanguageServerLib\DaedalusLanguageServerLib.csproj", "{3EE18815-E2C7-42E5-9FB1-096EACF98CBF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
