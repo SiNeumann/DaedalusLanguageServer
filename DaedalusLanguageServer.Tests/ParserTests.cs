@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace DaedalusLanguageServer.Tests
@@ -39,7 +40,7 @@ namespace DaedalusLanguageServer.Tests
         [TestMethod]
         public void ParseFileWithVariables()
         {
-            var parsed = Compiler.Parse(@"const string NINJA_MANAREG_VERSION = ""ManaReg 1.1.0"";
+            var parsed = Compiler.Parse(@"const string NINJA_MANAREG_VERSION = ""ManaReg 1.1.0""
 func void Ninja_ManaReg_Regeneration() {
     // Not during loading
     if (!Hlp_IsValidNpc(hero)) { return; };
@@ -67,7 +68,7 @@ func void Ninja_ManaReg_Regeneration() {
             Dictionary<string, string> documentations = null;
             if (File.Exists(symbolInfoPath))
             {
-                var symbolInfos = JsonSerializer.Parse<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
+                var symbolInfos = JsonSerializer.Deserialize<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
                 documentations = symbolInfos.ToDictionary(x => x.Name, x => x.Documentation, StringComparer.OrdinalIgnoreCase);
             }
         }

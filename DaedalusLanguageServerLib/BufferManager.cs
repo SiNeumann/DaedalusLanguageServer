@@ -4,7 +4,7 @@ namespace DaedalusLanguageServerLib
 {
     public class BufferManager
     {
-        private ConcurrentDictionary<string, BufferedDocument> _buffers = new ConcurrentDictionary<string, BufferedDocument>();
+        private readonly ConcurrentDictionary<string, BufferedDocument> _buffers = new ConcurrentDictionary<string, BufferedDocument>();
 
         public void UpdateBuffer(string documentPath, char[] buffer)
         {

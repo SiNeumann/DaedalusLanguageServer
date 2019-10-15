@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DaedalusLanguageServer
@@ -32,15 +32,15 @@ namespace DaedalusLanguageServer
                     .AddDefaultLoggingProvider()
                     .WithMinimumLogLevel(logLevel)
                     .WithServices(ConfigureServices)
-                    .WithHandler<TextDocumentSyncHandler>()
-                    .WithHandler<DidChangeWatchedFilesHandler>()
-                    .WithHandler<DidChangeWorkspaceFoldersHandler>()
-                    .WithHandler<DocumentSymbolHandler>()
-                    .WithHandler<CompletionHandler>()
-                    .WithHandler<HoverHandler>()
-                    .WithHandler<GoToDefinitionHandler>()
-                    .WithHandler<SignatureInfoHandler>()
-                    .WithHandler<InitializeHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.TextDocumentSyncHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.DidChangeWatchedFilesHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.DidChangeWorkspaceFoldersHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.DocumentSymbolHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.CompletionHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.HoverHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.GoToDefinitionHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.SignatureInfoHandler>()
+                    .WithHandler<DaedalusLanguageServerLib.Services.InitializeHandler>()
                  );
             var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
             ParseBuiltIns(docManager);
@@ -65,7 +65,7 @@ namespace DaedalusLanguageServer
             Dictionary<string, string> documentations = null;
             if (File.Exists(symbolInfoPath))
             {
-                var symbolInfos = JsonSerializer.Parse<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
+                var symbolInfos = JsonSerializer.Deserialize<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
                 documentations = symbolInfos.ToDictionary(x => x.Name, x => x.Documentation, StringComparer.OrdinalIgnoreCase);
             }
 
