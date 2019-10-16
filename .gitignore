@@ -341,3 +341,5 @@ healthchecksdb
 /Parser/.vscode
 /Parser/Output
 *.jar
+.antlr/
+**/.antlr/
