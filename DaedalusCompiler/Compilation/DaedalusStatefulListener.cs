@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime.Misc;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 using DaedalusCompiler.Compilation.Symbols;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,10 @@ namespace DaedalusCompiler.Compilation
 {
     public class DaedalusStatefulDetailedParseTreeListener : DaedalusStatefulParseTreeListener
     {
+        public DaedalusStatefulDetailedParseTreeListener(DaedalusParser parser) : base(parser)
+        {
+        }
+
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             base.EnterFunctionDef(context);
@@ -85,7 +90,12 @@ namespace DaedalusCompiler.Compilation
         public List<Instance> GlobalInstances { get; } = new List<Instance>();
 
         protected Function CurrentFunctionDef;
+        private readonly DaedalusParser parser;
 
+        public DaedalusStatefulParseTreeListener(DaedalusParser parser)
+        {
+            this.parser = parser;
+        }
 
         public override void EnterInlineDef([NotNull] DaedalusParser.InlineDefContext context)
         {
@@ -97,6 +107,27 @@ namespace DaedalusCompiler.Compilation
             AddGlobalsBlockDef(context);
         }
 
+        public override void EnterAnyIdentifier([NotNull] DaedalusParser.AnyIdentifierContext context)
+        {
+            var id = context.Identifier()?.GetText();
+            if (id?.Length > 0 && char.IsDigit(id[0]))
+            {
+                var error = new RecognitionException($"[deprecated] {SyntaxErrorConstants.D0001_No_Identifier_With_Starting_Digits.Code}: {SyntaxErrorConstants.D0001_No_Identifier_With_Starting_Digits.Description}", parser, parser.InputStream, context);
+                error.Data.Add(SyntaxError.DataKey_Severity, ErrorSeverity.Warning);
+                parser.NotifyErrorListeners(context.Identifier().Symbol, error.Message, error);
+            }
+        }
+        public override void EnterVarDecl([NotNull] DaedalusParser.VarDeclContext context)
+        {
+            var varDecls = context.varDecl();
+            if (varDecls != null && varDecls.Length > 0)
+            {
+                var error = new RecognitionException($"[deprecated] {SyntaxErrorConstants.D0002_Split_Multiple_Var_Decl.Code}: {SyntaxErrorConstants.D0002_Split_Multiple_Var_Decl.Description}", parser, parser.InputStream, context);
+                error.Data.Add(SyntaxError.DataKey_Severity, ErrorSeverity.Warning);
+                parser.NotifyErrorListeners(varDecls[0].Start, error.Message, error);
+            }
+            base.EnterVarDecl(context);
+        }
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             var fd = context;

@@ -55,9 +55,17 @@ namespace DaedalusCompiler.Compilation
 
         private class SyntaxErrorListener : IAntlrErrorListener<IToken>
         {
+
             public List<SyntaxError> SyntaxErrors { get; } = new List<SyntaxError>();
             public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
-                => SyntaxErrors.Add(new SyntaxError { Message = msg, Column = charPositionInLine, Line = line });
+            {
+                var severity = ErrorSeverity.Error;
+                if (e.Data.Contains(Compilation.SyntaxError.DataKey_Severity))
+                {
+                    severity = (ErrorSeverity)e.Data[Compilation.SyntaxError.DataKey_Severity];
+                }
+                SyntaxErrors.Add(new SyntaxError { Message = msg, Column = charPositionInLine, Line = line, Severity = severity });
+            }
         }
 
         private ParseResult ParseText(string fileContent, bool detailed = false)
@@ -68,7 +76,7 @@ namespace DaedalusCompiler.Compilation
                 var parser = GetParserForText(fileContent, TextWriter.Null, sw);
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
-                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener() : new DaedalusStatefulParseTreeListener();
+                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser) : new DaedalusStatefulParseTreeListener(parser);
                 ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
 
                 return new ParseResult
@@ -93,7 +101,7 @@ namespace DaedalusCompiler.Compilation
                 var parser = GetParserForStream(sr, TextWriter.Null, sw);
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
-                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener() : new DaedalusStatefulParseTreeListener();
+                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser) : new DaedalusStatefulParseTreeListener(parser);
                 ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
 
                 return new ParseResult

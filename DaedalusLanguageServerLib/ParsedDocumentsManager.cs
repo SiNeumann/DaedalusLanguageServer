@@ -153,6 +153,7 @@ namespace DaedalusLanguageServerLib
                         .Select(x => new Diagnostic
                         {
                             Message = x.Message,
+                            Severity = DiagnosticSeverityFromSyntaxError(x),
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(x.Line - 1, x.Column), new Position(x.Line - 1, x.Column)),
                         }))
                 };
@@ -160,7 +161,19 @@ namespace DaedalusLanguageServerLib
             UpdateParseResult(uri, parserResult);
             return null;
         }
-
+        private static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
+        {
+            switch (syntaxError.Severity)
+            {
+                case ErrorSeverity.Info:
+                    return DiagnosticSeverity.Information;
+                case ErrorSeverity.Warning:
+                    return DiagnosticSeverity.Warning;
+                case ErrorSeverity.Error:                    
+                default:
+                    return DiagnosticSeverity.Error;
+            }
+        }
         private CompletionItemKind KindFromSymbol(Symbol s)
         {
             switch (s)

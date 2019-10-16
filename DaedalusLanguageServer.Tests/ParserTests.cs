@@ -36,7 +36,30 @@ namespace DaedalusLanguageServer.Tests
         {
             var parsed = Compiler.Parse(@"instance PC_Hero (NPC_DEFAULT) {};");
         }
+        [TestMethod]
+        public void ParseMultiVarsAndNumericIdentifiers()
+        {
+            var parsed = Compiler.Parse(@"func int learn1hSkill(var int skill) {
+	var string 1hSkillText, var int meinInt;
+	1hSkillText = ConcatStrings (""Lerne: Einhand Stufe "", IntToString (skill));
 
+    decreaseLearnPoints(B_GetLearnCostWeaponSkill(NPC_TALENT_1H, skill));
+            PrintScreen_Ext(1hSkillText, -1, -1, FONT_SCREEN, 2);
+            B_RaiseFightTalent(hero, NPC_TALENT_1H, B_GetRaiseAmountOfWeaponSkill(NPC_TALENT_1H, skill));
+            onehandedSkillLevel = skill;
+
+    MEM_SwapBytes(n0+60,                       n1+60,                      64);                          // trafo
+
+    };");
+            if (parsed.SyntaxErrors.Count > 0)
+            {
+                foreach (var err in parsed.SyntaxErrors)
+                {
+                    Console.WriteLine($"{err.Line}:{err.Column} {err.Message}");
+                }
+            }
+            Console.WriteLine(parsed);
+        }
         [TestMethod]
         public void ParseFileWithVariables()
         {

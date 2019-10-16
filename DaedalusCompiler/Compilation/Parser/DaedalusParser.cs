@@ -41,8 +41,8 @@ public partial class DaedalusParser : Parser {
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
 		T__31=32, T__32=33, Const=34, Var=35, If=36, Int=37, Else=38, Func=39, 
-		String=40, Class=41, Void=42, Return=43, Float=44, Prototype=45, Instance=46, 
-		Null=47, NoFunc=48, Identifier=49, IntegerLiteral=50, FloatLiteral=51, 
+		StringKeyword=40, Class=41, Void=42, Return=43, Float=44, Prototype=45, 
+		Instance=46, Null=47, NoFunc=48, Identifier=49, IntegerLiteral=50, FloatLiteral=51, 
 		StringLiteral=52, Whitespace=53, Newline=54, BlockComment=55, LineComment=56;
 	public const int
 		RULE_daedalusFile = 0, RULE_blockDef = 1, RULE_inlineDef = 2, RULE_functionDef = 3, 
@@ -83,8 +83,8 @@ public partial class DaedalusParser : Parser {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, "Const", "Var", 
-		"If", "Int", "Else", "Func", "String", "Class", "Void", "Return", "Float", 
-		"Prototype", "Instance", "Null", "NoFunc", "Identifier", "IntegerLiteral", 
+		"If", "Int", "Else", "Func", "StringKeyword", "Class", "Void", "Return", 
+		"Float", "Prototype", "Instance", "Null", "NoFunc", "Identifier", "IntegerLiteral", 
 		"FloatLiteral", "StringLiteral", "Whitespace", "Newline", "BlockComment", 
 		"LineComment"
 	};
@@ -1321,7 +1321,7 @@ public partial class DaedalusParser : Parser {
 					case Var:
 					case Int:
 					case Func:
-					case String:
+					case StringKeyword:
 					case Class:
 					case Void:
 					case Return:
@@ -1511,7 +1511,7 @@ public partial class DaedalusParser : Parser {
 			State = 294;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__14) | (1L << T__15) | (1L << T__24) | (1L << T__25) | (1L << Int) | (1L << Func) | (1L << String) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << NoFunc) | (1L << Identifier) | (1L << IntegerLiteral) | (1L << FloatLiteral) | (1L << StringLiteral))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__14) | (1L << T__15) | (1L << T__24) | (1L << T__25) | (1L << Int) | (1L << Func) | (1L << StringKeyword) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << NoFunc) | (1L << Identifier) | (1L << IntegerLiteral) | (1L << FloatLiteral) | (1L << StringLiteral))) != 0)) {
 				{
 				State = 286; funcArgExpression();
 				State = 291;
@@ -1878,7 +1878,7 @@ public partial class DaedalusParser : Parser {
 			State = 328;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__14) | (1L << T__15) | (1L << T__24) | (1L << T__25) | (1L << Int) | (1L << Func) | (1L << String) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << NoFunc) | (1L << Identifier) | (1L << IntegerLiteral) | (1L << FloatLiteral) | (1L << StringLiteral))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__14) | (1L << T__15) | (1L << T__24) | (1L << T__25) | (1L << Int) | (1L << Func) | (1L << StringKeyword) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << NoFunc) | (1L << Identifier) | (1L << IntegerLiteral) | (1L << FloatLiteral) | (1L << StringLiteral))) != 0)) {
 				{
 				State = 327; expressionBlock();
 				}
@@ -2259,7 +2259,7 @@ public partial class DaedalusParser : Parser {
 				break;
 			case Int:
 			case Func:
-			case String:
+			case StringKeyword:
 			case Class:
 			case Void:
 			case Float:
@@ -2440,7 +2440,7 @@ public partial class DaedalusParser : Parser {
 				break;
 			case Int:
 			case Func:
-			case String:
+			case StringKeyword:
 			case Class:
 			case Void:
 			case Float:
@@ -2504,7 +2504,7 @@ public partial class DaedalusParser : Parser {
 				break;
 			case Int:
 			case Func:
-			case String:
+			case StringKeyword:
 			case Class:
 			case Void:
 			case Float:
@@ -2836,7 +2836,7 @@ public partial class DaedalusParser : Parser {
 		public ITerminalNode Void() { return GetToken(DaedalusParser.Void, 0); }
 		public ITerminalNode Int() { return GetToken(DaedalusParser.Int, 0); }
 		public ITerminalNode Float() { return GetToken(DaedalusParser.Float, 0); }
-		public ITerminalNode String() { return GetToken(DaedalusParser.String, 0); }
+		public ITerminalNode StringKeyword() { return GetToken(DaedalusParser.StringKeyword, 0); }
 		public ITerminalNode Func() { return GetToken(DaedalusParser.Func, 0); }
 		public ITerminalNode Instance() { return GetToken(DaedalusParser.Instance, 0); }
 		public TypeReferenceContext(ParserRuleContext parent, int invokingState)
@@ -2864,7 +2864,7 @@ public partial class DaedalusParser : Parser {
 			{
 			State = 416;
 			_la = TokenStream.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << Int) | (1L << Func) | (1L << String) | (1L << Void) | (1L << Float) | (1L << Instance) | (1L << Identifier))) != 0)) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << Int) | (1L << Func) | (1L << StringKeyword) | (1L << Void) | (1L << Float) | (1L << Instance) | (1L << Identifier))) != 0)) ) {
 			ErrorHandler.RecoverInline(this);
 			}
 			else {
@@ -2888,7 +2888,7 @@ public partial class DaedalusParser : Parser {
 		public ITerminalNode Void() { return GetToken(DaedalusParser.Void, 0); }
 		public ITerminalNode Int() { return GetToken(DaedalusParser.Int, 0); }
 		public ITerminalNode Float() { return GetToken(DaedalusParser.Float, 0); }
-		public ITerminalNode String() { return GetToken(DaedalusParser.String, 0); }
+		public ITerminalNode StringKeyword() { return GetToken(DaedalusParser.StringKeyword, 0); }
 		public ITerminalNode Func() { return GetToken(DaedalusParser.Func, 0); }
 		public ITerminalNode Instance() { return GetToken(DaedalusParser.Instance, 0); }
 		public ITerminalNode Class() { return GetToken(DaedalusParser.Class, 0); }
@@ -2920,7 +2920,7 @@ public partial class DaedalusParser : Parser {
 			{
 			State = 418;
 			_la = TokenStream.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << Int) | (1L << Func) | (1L << String) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << Identifier))) != 0)) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << Int) | (1L << Func) | (1L << StringKeyword) | (1L << Class) | (1L << Void) | (1L << Float) | (1L << Prototype) | (1L << Instance) | (1L << Null) | (1L << Identifier))) != 0)) ) {
 			ErrorHandler.RecoverInline(this);
 			}
 			else {

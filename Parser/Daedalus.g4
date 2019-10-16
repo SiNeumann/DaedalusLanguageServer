@@ -1,22 +1,22 @@
 grammar Daedalus;
 // lexer
-Const : 'const' | 'CONST';
-Var: 'var' | 'VAR';
-If : 'if' | 'IF';
-Int: 'int' | 'INT';
-Else: 'else' | 'ELSE';
-Func: 'func' | 'FUNC';
-String: 'string' | 'STRING';
-Class: 'class' | 'CLASS';
-Void: 'void' | 'VOID';
-Return: 'return' | 'RETURN';
-Float: 'float' | 'FLOAT';
-Prototype: 'prototype' | 'PROTOTYPE';
-Instance: 'instance' | 'INSTANCE';
-Null: 'null' | 'Null' | 'NULL' ;
-NoFunc: 'nofunc' | 'NoFunc' | 'NOFUNC';
+Const : [Cc][Oo][Nn][Ss][Tt];
+Var: [Vv][Aa][Rr];
+If : [Ii][Ff];
+Int: [Ii][Nn][Tt];
+Else: [Ee][Ll][Ss][Ee];
+Func: [Ff][Uu][Nn][Cc];
+StringKeyword: [Ss][Tt][Rr][Ii][Nn][Gg];
+Class: [Cc][Ll][Aa][Ss][Ss];
+Void: [Vv][Oo][Ii][Dd];
+Return: [Rr][Ee][Tt][Uu][Rr][Nn];
+Float: [Ff][Ll][Oo][Aa][Tt];
+Prototype: [Pp][Rr][Oo][Tt][Oo][Tt][Yy][Pp][Ee];
+Instance: [Ii][Nn][Ss][Tt][Aa][Nn][Cc][Ee];
+Null: [Nn][Uu][Ll][Ll];
+NoFunc: [Nn][Oo][Ff][Uu][Nn][Cc];
 
-Identifier : IdStart IdContinue*;
+Identifier : (IdStart|IdStartNumeric) IdContinue*;
 IntegerLiteral : Digit+;
 FloatLiteral : PointFloat | ExponentFloat;
 StringLiteral : '"' (~["\\\r\n] | '\\' (. | EOF))* '"';
@@ -28,6 +28,7 @@ LineComment :   '//' ~[\r\n]* -> skip ;
 
 // fragments
 fragment IdStart : GermanCharacter | [a-zA-Z_];
+fragment IdStartNumeric : Digit IdStart;
 fragment IdContinue : IdStart | IdSpecial | Digit;
 fragment IdSpecial : [@^];
 fragment GermanCharacter : [\u00DF\u00E4\u00F6\u00FC];
@@ -108,8 +109,8 @@ value
 referenceAtom: nameNode ( '[' arrayIndex ']')?;
 reference: referenceAtom ( '.' referenceAtom )?;
 
-typeReference:  ( Identifier | Void | Int | Float | String | Func | Instance);
-anyIdentifier:  ( Void | Int | Float | String | Func | Instance | Class | Prototype | Null | Identifier);
+typeReference:  ( Identifier | Void | Int | Float | StringKeyword | Func | Instance);
+anyIdentifier:  ( Void | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Null | Identifier);
 
 nameNode: anyIdentifier;
 
