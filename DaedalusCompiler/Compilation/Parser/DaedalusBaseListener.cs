@@ -71,6 +71,18 @@ public partial class DaedalusBaseListener : IDaedalusListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitInlineDef([NotNull] DaedalusParser.InlineDefContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="DaedalusParser.symbolSummary"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSymbolSummary([NotNull] DaedalusParser.SymbolSummaryContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="DaedalusParser.symbolSummary"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSymbolSummary([NotNull] DaedalusParser.SymbolSummaryContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="DaedalusParser.functionDef"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

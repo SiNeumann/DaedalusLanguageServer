@@ -22,7 +22,8 @@ FloatLiteral : PointFloat | ExponentFloat;
 StringLiteral : '"' (~["\\\r\n] | '\\' (. | EOF))* '"';
 
 Whitespace : [ \t]+ -> skip;
-SummaryComment : DocCommentStart ~[\r\n]*;
+TooManyCommentlines : '////' ~[\r\n]* -> skip ;
+SummaryComment : DocCommentStart ~[\r\n]+;
 Newline : [\r\n] -> skip;
 BlockComment :   '/*' .*? '*/' -> skip;
 LineComment :   '//' ~[\r\n]* -> skip ;
@@ -41,13 +42,14 @@ fragment DocCommentStart : '///';
 
 
 //parser
-daedalusFile:  (blockDef | inlineDef)*? EOF;
+daedalusFile:  (blockDef | inlineDef | symbolSummary)*? EOF;
 blockDef : (functionDef  | classDef | prototypeDef | instanceDef)';'?;
 inlineDef :  (constDef | varDecl | instanceDecl )';';
 
-functionDef: SummaryComment* Func typeReference nameNode parameterList statementBlock;
+symbolSummary: SummaryComment+;
+functionDef: symbolSummary* Func typeReference nameNode parameterList statementBlock;
 constDef: Const typeReference (constValueDef | constArrayDef) (',' (constValueDef | constArrayDef) )*;
-classDef: Class nameNode '{' ( varDecl ';' )*? '}';
+classDef: Class nameNode '{' ( varDecl ';' | symbolSummary )*? '}';
 prototypeDef: Prototype nameNode '(' parentReference ')' statementBlock;
 instanceDef: Instance nameNode '(' parentReference ')' statementBlock;
 instanceDecl: Instance nameNode ( ',' nameNode )*? '(' parentReference ')';
@@ -64,7 +66,7 @@ varValueDecl: nameNode;
 
 parameterList: '(' (parameterDecl (',' parameterDecl)*? )? ')';
 parameterDecl: Var typeReference nameNode ('[' arraySize ']')?;
-statementBlock: '{' ( ( (statement ';')  | ( ifBlockStatement ( ';' )? ) ) )*? '}';
+statementBlock: symbolSummary* '{' ( (statement ';')  | ( ifBlockStatement ( ';' )? ) | symbolSummary )*? '}' symbolSummary*;
 statement: assignment | returnStatement | constDef | varDecl | funcCall | expression;
 funcCall: nameNode '(' ( funcArgExpression ( ',' funcArgExpression )*? )? ')';
 assignment: reference assignmentOperator expressionBlock;

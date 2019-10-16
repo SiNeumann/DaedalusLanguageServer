@@ -129,7 +129,7 @@ namespace DaedalusCompiler.Compilation
             base.EnterVarDecl(context);
         }
         private readonly StringBuilder _docCommentBuilder = new StringBuilder();
-        private bool _docCommentBuilderCleaned;
+        private bool _docCommentBuilderCleaned = true;
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             var fd = context;
@@ -148,7 +148,7 @@ namespace DaedalusCompiler.Compilation
                     });
                 }
             }
-            var summary = fd.SummaryComment();
+            var summary = fd.symbolSummary();
             if (!_docCommentBuilderCleaned)
             {
                 _docCommentBuilder.Clear();
@@ -158,20 +158,25 @@ namespace DaedalusCompiler.Compilation
             {
                 for (var i = 0; i < summary.Length; i++)
                 {
-                    _docCommentBuilder.AppendLine(summary[i].GetText().TrimStart('/', ' '));
+                    var line = summary[i]?.GetText();
+                    if (line == null) continue;
+                    _docCommentBuilder.AppendLine(line.TrimStart('/', ' '));
                 }
                 _docCommentBuilderCleaned = false;
             }
-            GlobalFunctions.Add(CurrentFunctionDef = new Function
+            var fncNamenode = fd.nameNode();
+            var fnc = new Function
             {
-                Name = fd.nameNode().GetText(),
+                Name = fncNamenode.GetText(),
                 ReturnType = fd.typeReference().GetText(),
-                Line = fd.nameNode().Start.Line,
-                Column = fd.nameNode().Start.Column,
+                Line = fncNamenode.Start.Line,
+                Column = fncNamenode.Start.Column,
                 Parameters = p,
-                Documentation = _docCommentBuilder.ToString(),
-                Definition = new Defintion { Start = new DefinitionIndex(fd.Start.Line, fd.Start.Column) }
-            });
+                Documentation = _docCommentBuilderCleaned ? "" : _docCommentBuilder.ToString(),
+                Definition = new Defintion { Start = new DefinitionIndex(fd.Start.Line, fd.Start.Column), End = new DefinitionIndex(fd.Stop.Line, fd.Stop.Column) }
+            };
+            CurrentFunctionDef = fnc;
+            GlobalFunctions.Add(fnc);
         }
 
         private void AddGlobalsBlockDef(Antlr4.Runtime.ParserRuleContext ruleContext)

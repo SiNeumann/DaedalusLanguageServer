@@ -61,6 +61,16 @@ public interface IDaedalusListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitInlineDef([NotNull] DaedalusParser.InlineDefContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="DaedalusParser.symbolSummary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSymbolSummary([NotNull] DaedalusParser.SymbolSummaryContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="DaedalusParser.symbolSummary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSymbolSummary([NotNull] DaedalusParser.SymbolSummaryContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="DaedalusParser.functionDef"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

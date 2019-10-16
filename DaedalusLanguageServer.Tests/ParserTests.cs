@@ -24,11 +24,11 @@ namespace DaedalusLanguageServer.Tests
                     Console.WriteLine($"Errors in {kvp.Key.LocalPath}");
                     foreach (var err in kvp.Value.SyntaxErrors)
                     {
-                        Console.WriteLine($"{err.Line}:{err.Column} {err.ErrorCode}");
+                        Console.WriteLine($"{err.Line}:{err.Column} {err.ErrorCode.Code}: {err.ErrorCode.Description}");
                     }
                 }
             }
-            Assert.IsTrue(!parsed.Values.Any(p => p.SyntaxErrors.Count > 0));
+            Assert.IsTrue(!parsed.Values.Any(p => p.SyntaxErrors.Count > 0 && p.SyntaxErrors.Any(s => s.ErrorCode.Severity == ErrorSeverity.Error)));
         }
 
         [TestMethod]
