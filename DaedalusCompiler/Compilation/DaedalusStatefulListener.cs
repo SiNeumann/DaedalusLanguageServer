@@ -2,7 +2,6 @@
 using Antlr4.Runtime.Misc;
 using DaedalusCompiler.Compilation.Symbols;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DaedalusCompiler.Compilation
 {
@@ -112,8 +111,8 @@ namespace DaedalusCompiler.Compilation
             var id = context.Identifier()?.GetText();
             if (id?.Length > 0 && char.IsDigit(id[0]))
             {
-                var error = new RecognitionException($"[deprecated] {SyntaxErrorConstants.D0001_No_Identifier_With_Starting_Digits.Code}: {SyntaxErrorConstants.D0001_No_Identifier_With_Starting_Digits.Description}", parser, parser.InputStream, context);
-                error.Data.Add(SyntaxError.DataKey_Severity, ErrorSeverity.Warning);
+                var error = new RecognitionException(parser, parser.InputStream, context);
+                error.Data.Add(SyntaxError.DataKey_ErrorCode, SyntaxErrorCodes.D0001_No_Identifier_With_Starting_Digits);
                 parser.NotifyErrorListeners(context.Identifier().Symbol, error.Message, error);
             }
         }
@@ -122,8 +121,8 @@ namespace DaedalusCompiler.Compilation
             var varDecls = context.varDecl();
             if (varDecls != null && varDecls.Length > 0)
             {
-                var error = new RecognitionException($"[deprecated] {SyntaxErrorConstants.D0002_Split_Multiple_Var_Decl.Code}: {SyntaxErrorConstants.D0002_Split_Multiple_Var_Decl.Description}", parser, parser.InputStream, context);
-                error.Data.Add(SyntaxError.DataKey_Severity, ErrorSeverity.Warning);
+                var error = new RecognitionException(parser, parser.InputStream, context);
+                error.Data.Add(SyntaxError.DataKey_ErrorCode, SyntaxErrorCodes.D0002_Split_Multiple_Var_Decl);
                 parser.NotifyErrorListeners(varDecls[0].Start, error.Message, error);
             }
             base.EnterVarDecl(context);

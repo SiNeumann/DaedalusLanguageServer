@@ -152,7 +152,8 @@ namespace DaedalusLanguageServerLib
                     Diagnostics = new Container<Diagnostic>(parserResult.SyntaxErrors
                         .Select(x => new Diagnostic
                         {
-                            Message = x.Message,
+                            Message = x.ErrorCode.Description,
+                            Code = x.ErrorCode.Code,
                             Severity = DiagnosticSeverityFromSyntaxError(x),
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(x.Line - 1, x.Column), new Position(x.Line - 1, x.Column)),
                         }))
@@ -163,7 +164,7 @@ namespace DaedalusLanguageServerLib
         }
         private static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
         {
-            switch (syntaxError.Severity)
+            switch (syntaxError.ErrorCode.Severity)
             {
                 case ErrorSeverity.Info:
                     return DiagnosticSeverity.Information;

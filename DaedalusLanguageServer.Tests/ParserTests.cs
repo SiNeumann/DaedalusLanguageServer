@@ -24,7 +24,7 @@ namespace DaedalusLanguageServer.Tests
                     Console.WriteLine($"Errors in {kvp.Key.LocalPath}");
                     foreach (var err in kvp.Value.SyntaxErrors)
                     {
-                        Console.WriteLine($"{err.Line}:{err.Column} {err.Message}");
+                        Console.WriteLine($"{err.Line}:{err.Column} {err.ErrorCode}");
                     }
                 }
             }
@@ -55,10 +55,9 @@ namespace DaedalusLanguageServer.Tests
             {
                 foreach (var err in parsed.SyntaxErrors)
                 {
-                    Console.WriteLine($"{err.Line}:{err.Column} {err.Message}");
+                    Console.WriteLine($"{err.Line}:{err.Column} {err.ErrorCode.Code}: {err.ErrorCode.Description}");
                 }
             }
-            Console.WriteLine(parsed);
         }
         [TestMethod]
         public void ParseFileWithVariables()

@@ -110,7 +110,8 @@ namespace DaedalusLanguageServer
                             kvp.Value.SyntaxErrors.Select(x => new OmniSharp.Extensions.LanguageServer.Protocol.Models.Diagnostic
                             {
                                 Severity = OmniSharp.Extensions.LanguageServer.Protocol.Models.DiagnosticSeverity.Error,
-                                Message = x.Message,
+                                Message = x.ErrorCode.Description,
+                                Code = x.ErrorCode.Code,
                                 Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
                                             new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column),
                                             new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column)

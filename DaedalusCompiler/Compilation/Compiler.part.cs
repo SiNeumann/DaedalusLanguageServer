@@ -1,10 +1,8 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using DaedalusCompiler.Compilation.Symbols;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -59,12 +57,16 @@ namespace DaedalusCompiler.Compilation
             public List<SyntaxError> SyntaxErrors { get; } = new List<SyntaxError>();
             public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
-                var severity = ErrorSeverity.Error;
-                if (e.Data.Contains(Compilation.SyntaxError.DataKey_Severity))
+                SyntaxErrorCode errorCode;
+                if (e.Data.Contains(Compilation.SyntaxError.DataKey_ErrorCode))
                 {
-                    severity = (ErrorSeverity)e.Data[Compilation.SyntaxError.DataKey_Severity];
+                    errorCode = (SyntaxErrorCode)e.Data[Compilation.SyntaxError.DataKey_ErrorCode];
                 }
-                SyntaxErrors.Add(new SyntaxError { Message = msg, Column = charPositionInLine, Line = line, Severity = severity });
+                else
+                {
+                    errorCode = new SyntaxErrorCode("D0000", e.Message);
+                }
+                SyntaxErrors.Add(new SyntaxError { ErrorCode = errorCode, Column = charPositionInLine, Line = line });
             }
         }
 
@@ -163,7 +165,7 @@ namespace DaedalusCompiler.Compilation
 
         private void UpdateParserSymbolSource(ParseResult result)
         {
-            IEnumerable<Symbol> symbols = result.EnumerateSymbols();
+            var symbols = result.EnumerateSymbols();
             var src = result.Source;
             foreach (var symbol in symbols)
             {
