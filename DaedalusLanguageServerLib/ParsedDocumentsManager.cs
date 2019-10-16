@@ -144,9 +144,10 @@ namespace DaedalusLanguageServerLib
             {
                 parserResult = Compiler.Parse(text, uri, detailed);
             }
+            PublishDiagnosticsParams result = null;
             if (parserResult.SyntaxErrors.Count > 0)
             {
-                return new PublishDiagnosticsParams
+                result = new PublishDiagnosticsParams
                 {
                     Uri = uri,
                     Diagnostics = new Container<Diagnostic>(parserResult.SyntaxErrors
@@ -160,7 +161,7 @@ namespace DaedalusLanguageServerLib
                 };
             }
             UpdateParseResult(uri, parserResult);
-            return null;
+            return result;
         }
         private static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
         {

@@ -39,7 +39,8 @@ namespace DaedalusLanguageServer.Tests
         [TestMethod]
         public void ParseMultiVarsAndNumericIdentifiers()
         {
-            var parsed = Compiler.Parse(@"func int learn1hSkill(var int skill) {
+            var parsed = Compiler.Parse(@"///Does magical stuff
+func int learn1hSkill(var int skill) {
 	var string 1hSkillText, var int meinInt;
 	1hSkillText = ConcatStrings (""Lerne: Einhand Stufe "", IntToString (skill));
 

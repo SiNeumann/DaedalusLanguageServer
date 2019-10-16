@@ -1,6 +1,7 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,9 +37,18 @@ namespace DaedalusLanguageServerLib.Services
 
             return Task.FromResult(new Hover
             {
-                Contents = new MarkedStringsOrMarkupContent(new MarkedString(DaedalusDefaults.Language, v.ToString()))
+                Contents = new MarkedStringsOrMarkupContent(GetSymbolDocumentation(v))
             });
 
+        }
+
+        private IEnumerable<MarkedString> GetSymbolDocumentation(DaedalusCompiler.Compilation.Symbols.Symbol symbol)
+        {
+            if (!string.IsNullOrEmpty(symbol.Documentation))
+            {
+                yield return new MarkedString("plaintext", symbol.Documentation);
+            }
+            yield return new MarkedString(DaedalusDefaults.Language, symbol.ToString());
         }
 
         public void SetCapability(HoverCapability capability)

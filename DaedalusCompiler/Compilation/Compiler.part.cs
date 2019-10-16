@@ -58,13 +58,19 @@ namespace DaedalusCompiler.Compilation
             public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
                 SyntaxErrorCode errorCode;
-                if (e.Data.Contains(Compilation.SyntaxError.DataKey_ErrorCode))
+                if (e != null)
                 {
-                    errorCode = (SyntaxErrorCode)e.Data[Compilation.SyntaxError.DataKey_ErrorCode];
-                }
-                else
+                    if (e.Data.Contains(Compilation.SyntaxError.DataKey_ErrorCode))
+                    {
+                        errorCode = (SyntaxErrorCode)e.Data[Compilation.SyntaxError.DataKey_ErrorCode];
+                    }
+                    else
+                    {
+                        errorCode = new SyntaxErrorCode("D0000", e.Message);
+                    }
+                } else
                 {
-                    errorCode = new SyntaxErrorCode("D0000", e.Message);
+                    errorCode = new SyntaxErrorCode("D0000", msg);
                 }
                 SyntaxErrors.Add(new SyntaxError { ErrorCode = errorCode, Column = charPositionInLine, Line = line });
             }

@@ -2,6 +2,7 @@
 using Antlr4.Runtime.Misc;
 using DaedalusCompiler.Compilation.Symbols;
 using System.Collections.Generic;
+using System.Text;
 
 namespace DaedalusCompiler.Compilation
 {
@@ -127,11 +128,13 @@ namespace DaedalusCompiler.Compilation
             }
             base.EnterVarDecl(context);
         }
+        private readonly StringBuilder _docCommentBuilder = new StringBuilder();
+        private bool _docCommentBuilderCleaned;
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             var fd = context;
             var p = new List<Variable>();
-            var funcParameters = fd.parameterList().parameterDecl();
+            var funcParameters = fd.parameterList()?.parameterDecl();
             if (funcParameters != null)
             {
                 foreach (var pdef in funcParameters)
@@ -145,7 +148,20 @@ namespace DaedalusCompiler.Compilation
                     });
                 }
             }
-
+            var summary = fd.SummaryComment();
+            if (!_docCommentBuilderCleaned)
+            {
+                _docCommentBuilder.Clear();
+                _docCommentBuilderCleaned = true;
+            }
+            if (summary?.Length > 0)
+            {
+                for (var i = 0; i < summary.Length; i++)
+                {
+                    _docCommentBuilder.AppendLine(summary[i].GetText().TrimStart('/', ' '));
+                }
+                _docCommentBuilderCleaned = false;
+            }
             GlobalFunctions.Add(CurrentFunctionDef = new Function
             {
                 Name = fd.nameNode().GetText(),
@@ -153,6 +169,7 @@ namespace DaedalusCompiler.Compilation
                 Line = fd.nameNode().Start.Line,
                 Column = fd.nameNode().Start.Column,
                 Parameters = p,
+                Documentation = _docCommentBuilder.ToString(),
                 Definition = new Defintion { Start = new DefinitionIndex(fd.Start.Line, fd.Start.Column) }
             });
         }

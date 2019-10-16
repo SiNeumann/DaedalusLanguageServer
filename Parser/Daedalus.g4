@@ -22,13 +22,14 @@ FloatLiteral : PointFloat | ExponentFloat;
 StringLiteral : '"' (~["\\\r\n] | '\\' (. | EOF))* '"';
 
 Whitespace : [ \t]+ -> skip;
-Newline : ('\r''\n'?| '\n') -> skip;
+SummaryComment : DocCommentStart ~[\r\n]*;
+Newline : [\r\n] -> skip;
 BlockComment :   '/*' .*? '*/' -> skip;
 LineComment :   '//' ~[\r\n]* -> skip ;
 
 // fragments
 fragment IdStart : GermanCharacter | [a-zA-Z_];
-fragment IdStartNumeric : Digit IdStart;
+fragment IdStartNumeric : Digit+ IdStart;
 fragment IdContinue : IdStart | IdSpecial | Digit;
 fragment IdSpecial : [@^];
 fragment GermanCharacter : [\u00DF\u00E4\u00F6\u00FC];
@@ -36,6 +37,7 @@ fragment Digit : [0-9];
 fragment PointFloat : Digit* '.' Digit+ | Digit+ '.';
 fragment ExponentFloat : (Digit+ | PointFloat) Exponent;
 fragment Exponent : [eE] [+-]? Digit+;
+fragment DocCommentStart : '///';
 
 
 //parser
@@ -43,8 +45,7 @@ daedalusFile:  (blockDef | inlineDef)*? EOF;
 blockDef : (functionDef  | classDef | prototypeDef | instanceDef)';'?;
 inlineDef :  (constDef | varDecl | instanceDecl )';';
 
-
-functionDef: Func typeReference nameNode parameterList statementBlock;
+functionDef: SummaryComment* Func typeReference nameNode parameterList statementBlock;
 constDef: Const typeReference (constValueDef | constArrayDef) (',' (constValueDef | constArrayDef) )*;
 classDef: Class nameNode '{' ( varDecl ';' )*? '}';
 prototypeDef: Prototype nameNode '(' parentReference ')' statementBlock;
