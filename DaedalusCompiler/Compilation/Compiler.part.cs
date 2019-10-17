@@ -68,7 +68,8 @@ namespace DaedalusCompiler.Compilation
                     {
                         errorCode = new SyntaxErrorCode("D0000", e.Message);
                     }
-                } else
+                }
+                else
                 {
                     errorCode = new SyntaxErrorCode("D0000", msg);
                 }
@@ -107,10 +108,22 @@ namespace DaedalusCompiler.Compilation
             {
                 var errors = new List<SyntaxError>();
                 var parser = GetParserForStream(sr, TextWriter.Null, sw);
+                parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
                 var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser) : new DaedalusStatefulParseTreeListener(parser);
-                ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
+                DaedalusParser.DaedalusFileContext fileCtx;
+                try
+                {
+                    fileCtx = parser.daedalusFile();
+                }
+                catch (Exception)
+                {
+                    parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.LL;
+                    fileCtx = parser.daedalusFile();
+                }
+
+                ParseTreeWalker.Default.Walk(listener, fileCtx);
 
                 return new ParseResult
                 {
@@ -133,8 +146,10 @@ namespace DaedalusCompiler.Compilation
             {
                 foreach (var f in SrcFileHelper.LoadScriptsFilePaths(absoluteSrcFilePath))
                 {
-                    var result = LoadFile(new Uri(f));
-                    parseResults.Add(new Uri(f), result);
+                    //var fileUri = new Uri(Uri.EscapeDataString(f));
+                    var result = LoadFile(f);
+                    var fileUriWithColonEncoded = new Uri(f).AbsoluteUri.Replace(":", "%3A").Replace("file%3A///", "file:///");
+                    parseResults.Add(new Uri(fileUriWithColonEncoded), result);
                 }
             }
             else
@@ -143,10 +158,11 @@ namespace DaedalusCompiler.Compilation
                     new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency },
                     (f, state, index) =>
                     {
-                        var result = LoadFile(new Uri(f));
+                        var fileUri = new Uri(Uri.EscapeUriString(f), UriKind.Absolute);
+                        var result = LoadFile(fileUri);
                         lock (parseResults)
                         {
-                            parseResults.Add(new Uri(f), result);
+                            parseResults.Add(fileUri, result);
                         }
                     });
             }

@@ -90,37 +90,18 @@ namespace DaedalusLanguageServer
 
         private static void ParseSrc(string srcPath, OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, ParsedDocumentsManager parsedDocumentsManager)
         {
-            var cpus = Environment.ProcessorCount;
-            if (cpus > 1) cpus--;
-            router.Window.LogInfo($"Parsing Gothic.Src using {cpus} threads. This might take a while.");
-            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath, cpus);
+            router.Window.LogInfo($"Parsing Gothic.Src. This might take a while.");
+            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath);
 
             foreach (var parseResult in parseResults)
             {
                 parsedDocumentsManager.UpdateParseResult(parseResult.Key, parseResult.Value);
             }
-            foreach (var kvp in parseResults)
-            {
-                if (kvp.Value.SyntaxErrors.Count > 0)
-                {
-                    router.Document.PublishDiagnostics(new OmniSharp.Extensions.LanguageServer.Protocol.Models.PublishDiagnosticsParams
-                    {
-                        Uri = kvp.Key,
-                        Diagnostics = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Container<OmniSharp.Extensions.LanguageServer.Protocol.Models.Diagnostic>(
-                            kvp.Value.SyntaxErrors.Select(x => new OmniSharp.Extensions.LanguageServer.Protocol.Models.Diagnostic
-                            {
-                                Severity = OmniSharp.Extensions.LanguageServer.Protocol.Models.DiagnosticSeverity.Error,
-                                Message = x.ErrorCode.Description,
-                                Code = x.ErrorCode.Code,
-                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                                            new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column),
-                                            new OmniSharp.Extensions.LanguageServer.Protocol.Models.Position(x.Line - 1, x.Column)
-                                        )
-                            }))
-                    });
-                }
-            }
             router.Window.LogInfo($"Parsed {parseResults.Count} scripts");
+            foreach (var dp in parsedDocumentsManager.ParseSrc(srcPath))
+            {
+                router.Document.PublishDiagnostics(dp);
+            }
         }
     }
 }

@@ -48,7 +48,7 @@ namespace DaedalusLanguageServerLib.Services
 
         public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            var documentPath = request.TextDocument.Uri.ToString();
+            var documentPath = request.TextDocument.Uri.AbsolutePath;
             var text = request.TextDocument.Text;
             _bufferManager.UpdateBuffer(documentPath, text.ToCharArray());
 

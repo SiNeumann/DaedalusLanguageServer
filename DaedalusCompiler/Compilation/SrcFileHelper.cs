@@ -21,13 +21,13 @@ namespace DaedalusCompiler.Compilation
             return lines;
         }
         
-        public static IEnumerable<string> LoadScriptsFilePaths(string srcFilePath)
+        public static List<string> LoadScriptsFilePaths(string srcFilePath)
         {
             Path.GetFileName(srcFilePath);
             return LoadScriptsFilePaths(srcFilePath, new HashSet<string>());
         }
 
-        private static IEnumerable<string> LoadScriptsFilePaths(string srcFilePath, HashSet<string> alreadyLoadedFiles)
+        private static List<string> LoadScriptsFilePaths(string srcFilePath, HashSet<string> alreadyLoadedFiles)
         {
             if (Path.GetExtension(srcFilePath).ToLower() != ".src")
                 throw new Exception($"Invalid SRC file: '{srcFilePath}'.");
@@ -101,7 +101,7 @@ namespace DaedalusCompiler.Compilation
             return filePaths.First();
         }
 
-        private static IEnumerable<string> LoadScriptsFilePaths(string basePath, string[] srcLines, HashSet<string> alreadyLoadedFiles)
+        private static List<string> LoadScriptsFilePaths(string basePath, string[] srcLines, HashSet<string> alreadyLoadedFiles)
         {
             List<string> result = new List<string>();
 

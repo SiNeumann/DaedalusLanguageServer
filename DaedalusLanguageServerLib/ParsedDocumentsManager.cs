@@ -127,34 +127,33 @@ namespace DaedalusLanguageServerLib
 
         private PublishDiagnosticsParams ParseInternal(Uri uri, string text, bool detailed, CancellationToken cancellation)
         {
-            var path = uri.LocalPath;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && path.StartsWith("/"))
-            {
-                path = Path.GetFullPath(path.Substring(1));
-            }
+            var newUri = new Uri(Uri.UnescapeDataString(uri.AbsoluteUri));
+            var localPath = newUri.LocalPath;
+
             // Workaround: Skip externals. Too many wrong function definitions 
-            if (path.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return null;
+            if (localPath.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && localPath.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return null;
 
             ParseResult parserResult = null;
             if (string.IsNullOrWhiteSpace(text))
             {
-                parserResult = Compiler.Load(path, detailed);
+                parserResult = Compiler.Load(localPath, detailed);
             }
             else
             {
-                parserResult = Compiler.Parse(text, uri, detailed);
+                parserResult = Compiler.Parse(text, newUri, detailed);
             }
             PublishDiagnosticsParams result = null;
             if (parserResult.SyntaxErrors.Count > 0)
             {
                 result = new PublishDiagnosticsParams
                 {
-                    Uri = uri,
+                    Uri = newUri,
                     Diagnostics = new Container<Diagnostic>(parserResult.SyntaxErrors
                         .Select(x => new Diagnostic
                         {
                             Message = x.ErrorCode.Description,
                             Code = x.ErrorCode.Code,
+                            //Source = localPath,
                             Severity = DiagnosticSeverityFromSyntaxError(x),
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(x.Line - 1, x.Column), new Position(x.Line - 1, x.Column)),
                         }))
@@ -162,6 +161,38 @@ namespace DaedalusLanguageServerLib
             }
             UpdateParseResult(uri, parserResult);
             return result;
+        }
+
+        public List<PublishDiagnosticsParams> ParseSrc(string srcPath, int numThreads = 1)
+        {
+            var parseResults = Compiler.ParseSrc(srcPath, numThreads);
+            foreach (var parseResult in parseResults)
+            {
+                UpdateParseResult(parseResult.Key, parseResult.Value);
+            }
+            var dp = new List<PublishDiagnosticsParams>();
+            foreach (var kvp in parseResults)
+            {
+                if (kvp.Value.SyntaxErrors.Count > 0)
+                {
+                    dp.Add(new PublishDiagnosticsParams
+                    {
+                        Uri = kvp.Key,
+                        Diagnostics = new Container<Diagnostic>(
+                            kvp.Value.SyntaxErrors.Select(x => new Diagnostic
+                            {
+                                Severity = DiagnosticSeverityFromSyntaxError(x),
+                                Message = x.ErrorCode.Description,
+                                Code = x.ErrorCode.Code,
+                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                                            new Position(x.Line - 1, x.Column),
+                                            new Position(x.Line - 1, x.Column)
+                                        )
+                            }))
+                    });
+                }
+            }
+            return dp;
         }
         private static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
         {
