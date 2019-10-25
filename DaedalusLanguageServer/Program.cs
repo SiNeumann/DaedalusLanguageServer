@@ -67,6 +67,7 @@ namespace DaedalusLanguageServer
                 catch (Exception ex)
                 {
                     router.Window.LogError("ERROR while parsing Gothic.src: " + ex.ToString());
+                    router.Window.ShowError("Gothic.src: " + ex.Message);
                 }
             }
             await server.WaitForExit;
