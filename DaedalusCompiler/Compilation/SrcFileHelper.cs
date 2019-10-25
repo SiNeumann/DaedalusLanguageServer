@@ -10,8 +10,8 @@ namespace DaedalusCompiler.Compilation
 
         public static string[] GetLines(string srcFilePath)
         {
-            string[] lines = File.ReadAllLines(srcFilePath);
-            for (int i = 0; i < lines.Length; ++i)
+            var lines = File.ReadAllLines(srcFilePath);
+            for (var i = 0; i < lines.Length; ++i)
             {
                 if (lines[i].Contains("//"))
                 {
@@ -20,7 +20,7 @@ namespace DaedalusCompiler.Compilation
             }
             return lines;
         }
-        
+
         public static List<string> LoadScriptsFilePaths(string srcFilePath)
         {
             Path.GetFileName(srcFilePath);
@@ -31,13 +31,13 @@ namespace DaedalusCompiler.Compilation
         {
             if (Path.GetExtension(srcFilePath).ToLower() != ".src")
                 throw new Exception($"Invalid SRC file: '{srcFilePath}'.");
-            
+
             if (alreadyLoadedFiles.Contains(srcFilePath.ToLower()))
             {
                 System.Diagnostics.Trace.WriteLine($"Cyclic dependency detected. SRC file '{srcFilePath}' is already loaded");
                 return new List<string>();
             }
-            
+
             alreadyLoadedFiles.Add(srcFilePath.ToLower());
 
             try
@@ -56,16 +56,16 @@ namespace DaedalusCompiler.Compilation
 
         private static string GetDirPathInsensitive(string basePath, string relativePath)
         {
-            string resultPath = basePath;
+            var resultPath = basePath;
 
-            EnumerationOptions options = new EnumerationOptions {MatchCasing = MatchCasing.CaseInsensitive};
-            string[] relativePathSplitted = relativePath.Split(Path.DirectorySeparatorChar);
-            int lastIndex = relativePathSplitted.Length - 1;
+            var options = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
+            var relativePathSplitted = relativePath.Split(Path.DirectorySeparatorChar);
+            var lastIndex = relativePathSplitted.Length - 1;
 
-            for (int i = 0; i < lastIndex; i++)
+            for (var i = 0; i < lastIndex; i++)
             {
-                string relativePathPart = relativePathSplitted[i];
-                string[] directories = Directory.GetDirectories(resultPath, relativePathPart, options);
+                var relativePathPart = relativePathSplitted[i];
+                var directories = Directory.GetDirectories(resultPath, relativePathPart, options);
                 if (directories.Length == 0)
                 {
                     throw new DirectoryNotFoundException($"ERROR: Could not find a part of the path '{Path.Combine(resultPath, relativePathPart)}'");
@@ -73,7 +73,7 @@ namespace DaedalusCompiler.Compilation
 
                 if (directories.Length > 1)
                 {
-                    throw new DirectoryNotFoundException($"ERROR: Ambigous path '{Path.Combine(resultPath, relativePathPart)}'. Matches {String.Join(";", directories)}");;
+                    throw new DirectoryNotFoundException($"ERROR: Ambigous path '{Path.Combine(resultPath, relativePathPart)}'. Matches {string.Join(";", directories)}"); ;
                 }
 
                 resultPath = Path.Combine(resultPath, directories.First());
@@ -83,11 +83,11 @@ namespace DaedalusCompiler.Compilation
 
         private static List<string> GetFilesInsensitive(string dirPath, string filenamePattern)
         {
-            EnumerationOptions options = new EnumerationOptions {MatchCasing = MatchCasing.CaseInsensitive};
-            List<string> filePaths = Directory.GetFiles(dirPath, filenamePattern, options).ToList();
+            var options = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
+            var filePaths = Directory.GetFiles(dirPath, filenamePattern, options).ToList();
             if (filePaths.Count == 0)
             {
-                throw new FileNotFoundException($"ERROR: Could not find any files in '{dirPath}' that matches pattern '{filenamePattern}'");
+                System.Diagnostics.Trace.WriteLine($"WARNING: Could not find any files in '{dirPath}' that matches pattern '{filenamePattern}'");
             }
 
             return filePaths;
@@ -95,33 +95,36 @@ namespace DaedalusCompiler.Compilation
 
         private static string GetFileInsensitive(string dirPath, string filenamePattern)
         {
-            List<string> filePaths = GetFilesInsensitive(dirPath, filenamePattern);
+            var filePaths = GetFilesInsensitive(dirPath, filenamePattern);
             if (filePaths.Count > 1)
             {
-                throw new DirectoryNotFoundException($"ERROR: Ambigous path '{Path.Combine(dirPath, filenamePattern)}'. Matches {String.Join(";", filePaths)}");;
+                System.Diagnostics.Trace.WriteLine($"WARNING: Ambigous path '{Path.Combine(dirPath, filenamePattern)}'. Matches {string.Join(";", filePaths)}");
             }
-
+            if (filePaths.Count == 0)
+            {
+                return null;
+            }
             return filePaths.First();
         }
 
         private static List<string> LoadScriptsFilePaths(string basePath, string[] srcLines, HashSet<string> alreadyLoadedFiles)
         {
-            List<string> result = new List<string>();
+            var result = new List<string>();
 
-            foreach (string line in srcLines.Where(x => String.IsNullOrWhiteSpace(x) == false).Select(item => Path.Combine(item.Trim().Split("\\").ToArray())))
+            foreach (var line in srcLines.Where(x => string.IsNullOrWhiteSpace(x) == false).Select(item => Path.Combine(item.Trim().Split("\\").ToArray())))
             {
                 try
                 {
-                    bool containsWildcard = line.Contains("*");
-                    string relativePath = line;
-                    string dirPath = GetDirPathInsensitive(basePath, relativePath);
-                    string filenamePattern = Path.GetFileName(relativePath);
-                    string pathExtensionLower = Path.GetExtension(filenamePattern).ToLower();
+                    var containsWildcard = line.Contains("*");
+                    var relativePath = line;
+                    var dirPath = GetDirPathInsensitive(basePath, relativePath);
+                    var filenamePattern = Path.GetFileName(relativePath);
+                    var pathExtensionLower = Path.GetExtension(filenamePattern).ToLower();
 
                     if (containsWildcard && pathExtensionLower == ".d")
                     {
-                        List<string> filePaths = GetFilesInsensitive(dirPath, filenamePattern);
-                        
+                        var filePaths = GetFilesInsensitive(dirPath, filenamePattern);
+
                         // we make custom sort to achieve same sort results independent from OS 
                         filePaths.Sort((a, b) =>
                         {
@@ -133,31 +136,54 @@ namespace DaedalusCompiler.Compilation
                             return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
                         });
 
-                        foreach (string filePath in filePaths)
+                        foreach (var filePath in filePaths)
                         {
-                            string filePathLower = filePath.ToLower();
-                            if (!alreadyLoadedFiles.Contains(filePathLower))
+                            if (File.Exists(filePath))
                             {
-                                alreadyLoadedFiles.Add(filePathLower);
-                                result.Add(filePath);
+                                var filePathLower = filePath.ToLower();
+                                if (!alreadyLoadedFiles.Contains(filePathLower))
+                                {
+                                    alreadyLoadedFiles.Add(filePathLower);
+                                    result.Add(filePath);
+                                }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Trace.WriteLine($"WARNING while parsing Gothic.src: '{filePath}' does not exist");
                             }
                         }
                     }
                     else if (pathExtensionLower == ".d")
                     {
-                        string fullPath = GetFileInsensitive(dirPath, filenamePattern);
-
-                        string fullPathLower = fullPath.ToLower();
-                        if (!alreadyLoadedFiles.Contains(fullPathLower))
+                        var fullPath = GetFileInsensitive(dirPath, filenamePattern);
+                        if (!string.IsNullOrWhiteSpace(fullPath))
                         {
-                            alreadyLoadedFiles.Add(fullPathLower);
-                            result.Add(fullPath);
+                            if (File.Exists(fullPath))
+                            {
+                                var fullPathLower = fullPath.ToLower();
+                                if (!alreadyLoadedFiles.Contains(fullPathLower))
+                                {
+                                    alreadyLoadedFiles.Add(fullPathLower);
+                                    result.Add(fullPath);
+                                }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Trace.WriteLine($"WARNING while parsing Gothic.src: '{fullPath}' does not exist");
+                            }
+                        } else
+                        {
+                                System.Diagnostics.Trace.WriteLine($"WARNING while parsing Gothic.src: no matches in '{dirPath}' for '{filenamePattern}'.");
                         }
                     }
                     else if (pathExtensionLower == ".src")
                     {
-                        string fullPath = GetFileInsensitive(dirPath, filenamePattern);
-                        result.AddRange(LoadScriptsFilePaths(fullPath, alreadyLoadedFiles));
+                        var fullPath = GetFileInsensitive(dirPath, filenamePattern);
+                        var scriptsFiles = LoadScriptsFilePaths(fullPath, alreadyLoadedFiles);
+                        if (scriptsFiles?.Count > 0)
+                        {
+                            result.AddRange(scriptsFiles);
+                        }
                     }
                     else
                     {

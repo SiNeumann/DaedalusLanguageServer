@@ -1,5 +1,4 @@
 ﻿using DaedalusLanguageServerLib;
-using DaedalusLanguageServerLib.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
@@ -23,7 +22,6 @@ namespace DaedalusLanguageServer
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             var logLevel = args.Any(x => x == "-debug") ? LogLevel.Trace : LogLevel.Warning;
-
             var server = await LanguageServer.From(options =>
                 options
                     .WithInput(Console.OpenStandardInput())
@@ -42,15 +40,51 @@ namespace DaedalusLanguageServer
                     .WithHandler<DaedalusLanguageServerLib.Services.SignatureInfoHandler>()
                     .WithHandler<DaedalusLanguageServerLib.Services.InitializeHandler>()
                  );
+            var router = server.Services.GetRequiredService<OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer>();
+
+            Action<string> logError = text =>
+            {
+                if (text.Contains("WARNING", StringComparison.OrdinalIgnoreCase))
+                {
+                    router.Window.LogWarning(text);
+                }
+                else if (text.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
+                {
+                    router.Window.LogError(text);
+                }
+            };
+            System.Diagnostics.Trace.Listeners.Add(new DelegateTraceListener(logError, logError));
+
             var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
             ParseBuiltIns(docManager);
             if (File.Exists("Gothic.src"))
             {
-                var router = server.Services.GetRequiredService<OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer>();
                 var srcPath = Path.GetFullPath("Gothic.src");
-                await Task.Run(() => ParseSrc(srcPath, router, docManager));
+                try
+                {
+                    await Task.Run(() => ParseSrc(srcPath, router, docManager));
+                }
+                catch (Exception ex)
+                {
+                    router.Window.LogError("ERROR while parsing Gothic.src: " + ex.ToString());
+                }
             }
             await server.WaitForExit;
+        }
+
+        private class DelegateTraceListener : System.Diagnostics.TraceListener
+        {
+            private readonly Action<string> write;
+            private readonly Action<string> writeLine;
+
+            public DelegateTraceListener(Action<string> write, Action<string> writeLine)
+            {
+                this.write = write;
+                this.writeLine = writeLine;
+            }
+            public override void Write(string message) => write(message);
+
+            public override void WriteLine(string message) => writeLine(message);
         }
 
         private static void ConfigureServices(IServiceCollection services)
