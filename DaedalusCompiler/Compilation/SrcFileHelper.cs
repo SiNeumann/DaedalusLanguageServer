@@ -33,7 +33,10 @@ namespace DaedalusCompiler.Compilation
                 throw new Exception($"Invalid SRC file: '{srcFilePath}'.");
             
             if (alreadyLoadedFiles.Contains(srcFilePath.ToLower()))
-                throw new Exception($"Cyclic dependency detected. SRC file '{srcFilePath}' is already loaded");
+            {
+                System.Diagnostics.Trace.WriteLine($"Cyclic dependency detected. SRC file '{srcFilePath}' is already loaded");
+                return new List<string>();
+            }
             
             alreadyLoadedFiles.Add(srcFilePath.ToLower());
 

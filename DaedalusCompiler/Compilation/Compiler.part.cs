@@ -146,6 +146,7 @@ namespace DaedalusCompiler.Compilation
             {
                 foreach (var f in SrcFileHelper.LoadScriptsFilePaths(absoluteSrcFilePath))
                 {
+                    if (!File.Exists(f)) continue;
                     //var fileUri = new Uri(Uri.EscapeDataString(f));
                     var result = LoadFile(f);
                     var fileUriWithColonEncoded = new Uri(f).AbsoluteUri.Replace(":", "%3A").Replace("file%3A///", "file:///");
@@ -158,6 +159,8 @@ namespace DaedalusCompiler.Compilation
                     new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency },
                     (f, state, index) =>
                     {
+                        if (!File.Exists(f)) return;
+
                         var fileUri = new Uri(Uri.EscapeUriString(f), UriKind.Absolute);
                         var result = LoadFile(fileUri);
                         lock (parseResults)
