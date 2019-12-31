@@ -1,6 +1,8 @@
-﻿using DaedalusLanguageServerLib;
+﻿using DaedalusCompiler.Compilation;
+using DaedalusLanguageServerLib;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
@@ -56,13 +58,21 @@ namespace DaedalusLanguageServer
             System.Diagnostics.Trace.Listeners.Add(new DelegateTraceListener(logError, logError));
 
             var docManager = server.Services.GetRequiredService<ParsedDocumentsManager>();
-            ParseBuiltIns(docManager);
+            var externals = ParseBuiltIns(docManager);
+            if (externals?.Count == 0)
+            {
+                router.Window.LogError("ERROR Could not find Gothic externals");
+                router.Window.ShowError("Could not find Gothic externals");
+            } else
+            {
+                router.Window.LogInfo($"INFO Loaded {externals.Count} externals");
+            }
             if (File.Exists("Gothic.src"))
             {
                 var srcPath = Path.GetFullPath("Gothic.src");
                 try
                 {
-                    await Task.Run(() => ParseSrc(srcPath, router, docManager));
+                    await Task.Run(() => ParseSrc(srcPath, externals, router, docManager));
                 }
                 catch (Exception ex)
                 {
@@ -94,7 +104,7 @@ namespace DaedalusLanguageServer
             services.AddSingleton<ParsedDocumentsManager>();
         }
 
-        private static void ParseBuiltIns(ParsedDocumentsManager parsedDocumentsManager)
+        private static Dictionary<Uri, ParseResult> ParseBuiltIns(ParsedDocumentsManager parsedDocumentsManager)
         {
             var symbolInfoPath = Path.Combine(AppDir, "DaedalusBuiltins", "symbols.json");
             Dictionary<string, string> documentations = null;
@@ -103,13 +113,15 @@ namespace DaedalusLanguageServer
                 var symbolInfos = JsonSerializer.Deserialize<List<SymbolDocumentation>>(File.ReadAllText(symbolInfoPath, Encoding.UTF8));
                 documentations = symbolInfos.ToDictionary(x => x.Name, x => x.Documentation, StringComparer.OrdinalIgnoreCase);
             }
-
+            var externals = new Dictionary<Uri, ParseResult>();
             var buildInsPath = Path.Combine(AppDir, "DaedalusBuiltins");
+
             foreach (var builtIn in Directory.EnumerateFiles(buildInsPath, "*.d"))
             {
                 var builtInUri = new Uri(builtIn);
                 parsedDocumentsManager.Parse(builtInUri, File.ReadAllText(builtIn, Encoding.GetEncoding(1250)), default);
                 var parsedResult = parsedDocumentsManager.GetParseResult(builtInUri);
+                externals[builtInUri] = parsedResult;
                 if (documentations != null)
                 {
                     foreach (var symbol in parsedResult.EnumerateSymbols())
@@ -121,19 +133,48 @@ namespace DaedalusLanguageServer
                     }
                 }
             }
+
+            return externals;
         }
 
-        private static void ParseSrc(string srcPath, OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, ParsedDocumentsManager parsedDocumentsManager)
+        private static void ParseSrc(
+            string srcPath, 
+            Dictionary<Uri, ParseResult> externals, 
+            OmniSharp.Extensions.LanguageServer.Protocol.Server.ILanguageServer router, 
+            ParsedDocumentsManager parsedDocumentsManager)
         {
             router.Window.LogInfo($"Parsing Gothic.Src. This might take a while.");
-            var parseResults = DaedalusCompiler.Compilation.Compiler.ParseSrc(srcPath);
+            var parseResults = Compiler.ParseSrc(srcPath, externals);
 
             foreach (var parseResult in parseResults)
             {
                 parsedDocumentsManager.UpdateParseResult(parseResult.Key, parseResult.Value);
             }
             router.Window.LogInfo($"Parsed {parseResults.Count} scripts");
-            foreach (var dp in parsedDocumentsManager.ParseSrc(srcPath))
+
+            var diagnostics = new List<PublishDiagnosticsParams>();
+            foreach (var kvp in parseResults)
+            {
+                if (kvp.Value.SyntaxErrors.Count > 0)
+                {
+                    diagnostics.Add(new PublishDiagnosticsParams
+                    {
+                        Uri = kvp.Key,
+                        Diagnostics = new Container<Diagnostic>(
+                            kvp.Value.SyntaxErrors.Select(x => new Diagnostic
+                            {
+                                Severity = ParsedDocumentsManager.DiagnosticSeverityFromSyntaxError(x),
+                                Message = x.ErrorCode.Description,
+                                Code = x.ErrorCode.Code,
+                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                                            new Position(x.Line - 1, x.Column),
+                                            new Position(x.Line - 1, x.Column)
+                                        )
+                            }))
+                    });
+                }
+            }
+            foreach (var dp in diagnostics)
             {
                 router.Document.PublishDiagnostics(dp);
             }

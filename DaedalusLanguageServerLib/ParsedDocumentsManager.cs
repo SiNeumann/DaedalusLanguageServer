@@ -4,22 +4,20 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace DaedalusLanguageServerLib
 {
     public class ParsedDocumentsManager
     {
-        private readonly ConcurrentDictionary<Uri, ParseResult> LastParseResults
+        private readonly ConcurrentDictionary<Uri, ParseResult> DocumentLastParseResults
             = new ConcurrentDictionary<Uri, ParseResult>();
 
-        private readonly ConcurrentDictionary<Uri, ILookup<string, Symbol>> symbolsLookup
+        private readonly ConcurrentDictionary<Uri, ILookup<string, Symbol>> documentSymbolsLookup
             = new ConcurrentDictionary<Uri, ILookup<string, Symbol>>();
 
-        private readonly ConcurrentDictionary<Uri, List<CompletionItem>> symbolCompletions
+        private readonly ConcurrentDictionary<Uri, List<CompletionItem>> documentSymbolCompletions
             = new ConcurrentDictionary<Uri, List<CompletionItem>>();
 
         public ParsedDocumentsManager()
@@ -27,7 +25,7 @@ namespace DaedalusLanguageServerLib
 
         public ParseResult GetParseResult(Uri uri)
         {
-            if (LastParseResults.TryGetValue(uri, out var val))
+            if (DocumentLastParseResults.TryGetValue(uri, out var val))
             {
                 return val;
             }
@@ -47,11 +45,11 @@ namespace DaedalusLanguageServerLib
                     Label = s.Name,
                     Detail = s.ToString(),
                 });
-                symbolCompletions[uri] = completionItems.ToList();
+                documentSymbolCompletions[uri] = completionItems.ToList();
             }
             else
             {
-                foreach (var kvp in LastParseResults)
+                foreach (var kvp in DocumentLastParseResults)
                 {
                     UpdateSymbolCompletions(kvp.Key);
                 }
@@ -60,35 +58,53 @@ namespace DaedalusLanguageServerLib
 
         public void UpdateParseResult(Uri uri, ParseResult parserResult)
         {
-            LastParseResults.AddOrUpdate(uri, parserResult, (u, oldParse) => parserResult);
+            DocumentLastParseResults.AddOrUpdate(uri, parserResult, (u, oldParse) => parserResult);
             var lookup = parserResult.EnumerateSymbols()
-                .ToLookup(c => c.Name.ToUpper());
+                .ToLookup(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
-            symbolsLookup.AddOrUpdate(uri, lookup, (key, old) => lookup);
+            documentSymbolsLookup.AddOrUpdate(uri, lookup, (key, old) => lookup);
             UpdateSymbolCompletions(uri);
         }
 
         public void Delete(Uri uri)
         {
-            LastParseResults.Remove(uri, out _);
-            symbolsLookup.Remove(uri, out _);
+            DocumentLastParseResults.Remove(uri, out _);
+            documentSymbolsLookup.Remove(uri, out _);
         }
-        public ICollection<CompletionItem> GetCompletionSymbols()
+        public ICollection<CompletionItem> GetCompletionSymbols(Uri uri = null, Position position = null)
         {
-            var symbols = new HashSet<CompletionItem>();
-            foreach (var kvp in symbolCompletions)
+            if (uri != null)
             {
-                foreach (var s in kvp.Value)
+                var symbols = new List<CompletionItem>();
+
+                foreach (var kvp in documentSymbolCompletions)
                 {
-                    symbols.Add(s);
+                    if (kvp.Key == uri) continue;
+
+                    foreach (var s in kvp.Value)
+                    {
+                        symbols.Add(s);
+                    }
                 }
+                return symbols;
             }
-            return symbols;
+            else
+            {
+                var symbols = new HashSet<CompletionItem>();
+                foreach (var kvp in documentSymbolCompletions)
+                {
+                    foreach (var s in kvp.Value)
+                    {
+                        symbols.Add(s);
+                    }
+                }
+                return symbols;
+            }
         }
         public List<Symbol> GetGlobalSymbols()
         {
             var symbols = new List<Symbol>();
-            foreach (var kvp in LastParseResults)
+            foreach (var kvp in DocumentLastParseResults)
             {
                 foreach (var s in kvp.Value.EnumerateSymbols())
                 {
@@ -97,10 +113,25 @@ namespace DaedalusLanguageServerLib
             }
             return symbols;
         }
+        public Symbol LookupInFunctionSymbol(Uri documentUri, string functionName, string identifier)
+        {
+            var fn = this.DocumentLastParseResults[documentUri].GlobalFunctions.FirstOrDefault(x => string.Equals(x.Name, functionName, StringComparison.OrdinalIgnoreCase));
+            if (fn is null)
+            {
+                return null;
+            }
+
+            Symbol sym = fn.Parameters.FirstOrDefault(x => string.Equals(x.Name, identifier, StringComparison.OrdinalIgnoreCase));
+            if (sym is null)
+            {
+                sym = fn.LocalVariables.FirstOrDefault(x => string.Equals(x.Name, identifier, StringComparison.OrdinalIgnoreCase));
+            }
+            return sym;
+        }
+
         public Symbol LookupSymbol(string identifier)
         {
-            identifier = identifier.ToUpper();
-            foreach (var item in symbolsLookup)
+            foreach (var item in documentSymbolsLookup)
             {
                 var symbols = item.Value;
                 if (symbols.Contains(identifier))
@@ -113,7 +144,7 @@ namespace DaedalusLanguageServerLib
 
         public IReadOnlyDictionary<Uri, ParseResult> GetDocuments()
         {
-            return LastParseResults;
+            return DocumentLastParseResults;
         }
 
         public PublishDiagnosticsParams ParseDetailed(Uri uri, string text, CancellationToken cancellation)
@@ -132,15 +163,15 @@ namespace DaedalusLanguageServerLib
 
             // Workaround: Skip externals. Too many wrong function definitions 
             if (localPath.Contains("AI_Intern", StringComparison.OrdinalIgnoreCase) && localPath.EndsWith("Externals.d", StringComparison.OrdinalIgnoreCase)) return null;
-
+            
             ParseResult parserResult = null;
             if (string.IsNullOrWhiteSpace(text))
             {
-                parserResult = Compiler.Load(localPath, detailed);
+                parserResult = Compiler.Load(localPath, detailed, GetDocuments().Values);
             }
             else
             {
-                parserResult = Compiler.Parse(text, newUri, detailed);
+                parserResult = Compiler.Parse(text, newUri, detailed, GetDocuments().Values);
             }
             PublishDiagnosticsParams result = null;
             if (parserResult.SyntaxErrors.Count > 0)
@@ -163,38 +194,7 @@ namespace DaedalusLanguageServerLib
             return result;
         }
 
-        public List<PublishDiagnosticsParams> ParseSrc(string srcPath, int numThreads = 1)
-        {
-            var parseResults = Compiler.ParseSrc(srcPath, numThreads);
-            foreach (var parseResult in parseResults)
-            {
-                UpdateParseResult(parseResult.Key, parseResult.Value);
-            }
-            var dp = new List<PublishDiagnosticsParams>();
-            foreach (var kvp in parseResults)
-            {
-                if (kvp.Value.SyntaxErrors.Count > 0)
-                {
-                    dp.Add(new PublishDiagnosticsParams
-                    {
-                        Uri = kvp.Key,
-                        Diagnostics = new Container<Diagnostic>(
-                            kvp.Value.SyntaxErrors.Select(x => new Diagnostic
-                            {
-                                Severity = DiagnosticSeverityFromSyntaxError(x),
-                                Message = x.ErrorCode.Description,
-                                Code = x.ErrorCode.Code,
-                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                                            new Position(x.Line - 1, x.Column),
-                                            new Position(x.Line - 1, x.Column)
-                                        )
-                            }))
-                    });
-                }
-            }
-            return dp;
-        }
-        private static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
+        public static DiagnosticSeverity DiagnosticSeverityFromSyntaxError(SyntaxError syntaxError)
         {
             switch (syntaxError.ErrorCode.Severity)
             {

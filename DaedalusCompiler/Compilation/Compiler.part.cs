@@ -3,6 +3,7 @@ using Antlr4.Runtime.Tree;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,15 +11,17 @@ namespace DaedalusCompiler.Compilation
 {
     public partial class Compiler
     {
-        public static ParseResult Load(string filename, bool detailed = false)
+        private Dictionary<Uri, ParseResult> externals = new Dictionary<Uri, ParseResult>();
+
+        public static ParseResult Load(string filename, bool detailed = false, IEnumerable<ParseResult> previouslyParsedFiles = null)
         {
             var compiler = new Compiler();
-            return compiler.LoadFile(filename, detailed);
+            return compiler.LoadFile(filename, detailed, previouslyParsedFiles);
         }
-        public static ParseResult Parse(string code, Uri src = null, bool detailed = false)
+        public static ParseResult Parse(string code, Uri src = null, bool detailed = false, IEnumerable<ParseResult> previouslyParsedFiles = null)
         {
             var compiler = new Compiler();
-            var result = compiler.ParseText(code, detailed);
+            var result = compiler.ParseText(code, detailed, previouslyParsedFiles);
             if (src != null)
             {
                 result.Source = src;
@@ -26,9 +29,10 @@ namespace DaedalusCompiler.Compilation
             }
             return result;
         }
-        public static Dictionary<Uri, ParseResult> ParseSrc(string srcPath)
+        public static Dictionary<Uri, ParseResult> ParseSrc(string srcPath, Dictionary<Uri, ParseResult> externals = null)
         {
             var compiler = new Compiler();
+            compiler.externals = externals;
             return compiler.ParseSrcInternal(srcPath, 1);
         }
 
@@ -38,14 +42,14 @@ namespace DaedalusCompiler.Compilation
             return compiler.ParseSrcInternal(srcPath, maxConcurrency);
         }
 
-        private ParseResult LoadFile(string filename, bool detailed = false)
+        private ParseResult LoadFile(string filename, bool detailed = false, IEnumerable<ParseResult> currentParseResults = null)
         {
-            return LoadFile(new Uri(filename), detailed);
+            return LoadFile(new Uri(filename), detailed, currentParseResults);
         }
 
-        private ParseResult LoadFile(Uri filename, bool detailed = false)
+        private ParseResult LoadFile(Uri filename, bool detailed = false, IEnumerable<ParseResult> currentParseResults = null)
         {
-            var result = ParseFile(filename.LocalPath, Encoding.GetEncoding(1250), detailed);
+            var result = ParseFile(filename.LocalPath, Encoding.GetEncoding(1250), detailed, currentParseResults);
             result.Source = filename;
             UpdateParserSymbolSource(result);
             return result;
@@ -77,7 +81,7 @@ namespace DaedalusCompiler.Compilation
             }
         }
 
-        private ParseResult ParseText(string fileContent, bool detailed = false)
+        private ParseResult ParseText(string fileContent, bool detailed = false, IEnumerable<ParseResult> currentParseResults = null)
         {
             using (var sw = new StringWriter())
             {
@@ -85,7 +89,7 @@ namespace DaedalusCompiler.Compilation
                 var parser = GetParserForText(fileContent, TextWriter.Null, sw);
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
-                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser) : new DaedalusStatefulParseTreeListener(parser);
+                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser, currentParseResults) : new DaedalusStatefulParseTreeListener(parser, currentParseResults);
                 ParseTreeWalker.Default.Walk(listener, parser.daedalusFile());
 
                 return new ParseResult
@@ -101,7 +105,7 @@ namespace DaedalusCompiler.Compilation
             }
         }
 
-        private ParseResult ParseFile(string filename, Encoding encoding, bool detailed = false)
+        private ParseResult ParseFile(string filename, Encoding encoding, bool detailed = false, IEnumerable<ParseResult> currentParseResults = null)
         {
             using (var sw = new StringWriter())
             using (var sr = new StreamReader(filename, encoding))
@@ -111,7 +115,9 @@ namespace DaedalusCompiler.Compilation
                 parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
                 var errListener = new SyntaxErrorListener();
                 parser.AddErrorListener(errListener);
-                var listener = detailed ? new DaedalusStatefulDetailedParseTreeListener(parser) : new DaedalusStatefulParseTreeListener(parser);
+                var listener = detailed ?
+                                new DaedalusStatefulDetailedParseTreeListener(parser, currentParseResults) 
+                                : new DaedalusStatefulParseTreeListener(parser, currentParseResults);
                 DaedalusParser.DaedalusFileContext fileCtx;
                 try
                 {
@@ -141,33 +147,22 @@ namespace DaedalusCompiler.Compilation
         private Dictionary<Uri, ParseResult> ParseSrcInternal(string srcPath, int maxConcurrency = 1)
         {
             var parseResults = new Dictionary<Uri, ParseResult>();
+            foreach (var kvp in externals)
+            {
+                parseResults[kvp.Key] = kvp.Value;
+            }
             var absoluteSrcFilePath = Path.GetFullPath(srcPath);
+
             if (maxConcurrency <= 1)
             {
                 foreach (var f in SrcFileHelper.LoadScriptsFilePaths(absoluteSrcFilePath))
                 {
                     if (!File.Exists(f)) continue;
                     //var fileUri = new Uri(Uri.EscapeDataString(f));
-                    var result = LoadFile(f);
+                    var result = LoadFile(f, false, parseResults.Values);
                     var fileUriWithColonEncoded = new Uri(f).AbsoluteUri.Replace(":", "%3A").Replace("file%3A///", "file:///");
                     parseResults.Add(new Uri(fileUriWithColonEncoded), result);
                 }
-            }
-            else
-            {
-                Parallel.ForEach(SrcFileHelper.LoadScriptsFilePaths(absoluteSrcFilePath),
-                    new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency },
-                    (f, state, index) =>
-                    {
-                        if (!File.Exists(f)) return;
-
-                        var fileUri = new Uri(Uri.EscapeUriString(f), UriKind.Absolute);
-                        var result = LoadFile(fileUri);
-                        lock (parseResults)
-                        {
-                            parseResults.Add(fileUri, result);
-                        }
-                    });
             }
             return parseResults;
         }
@@ -190,11 +185,20 @@ namespace DaedalusCompiler.Compilation
 
         private void UpdateParserSymbolSource(ParseResult result)
         {
-            var symbols = result.EnumerateSymbols();
             var src = result.Source;
+            if (src is null) return;
+
+            var symbols = result.EnumerateSymbols();
             foreach (var symbol in symbols)
             {
                 symbol.Source = src;
+            }
+            foreach (var symbol in result.GlobalFunctions)
+            {
+                foreach (var varDef in symbol.LocalVariables)
+                {
+                    varDef.Source = src;
+                }
             }
         }
     }

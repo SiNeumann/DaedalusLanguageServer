@@ -1,24 +1,23 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using DaedalusCompiler.Compilation.Symbols;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DaedalusCompiler.Compilation
 {
     public class DaedalusStatefulDetailedParseTreeListener : DaedalusStatefulParseTreeListener
     {
-        public DaedalusStatefulDetailedParseTreeListener(DaedalusParser parser) : base(parser)
+        public DaedalusStatefulDetailedParseTreeListener(DaedalusParser parser, IEnumerable<ParseResult> currentParseResults = null)
+            : base(parser, currentParseResults)
         {
         }
 
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             base.EnterFunctionDef(context);
-            var statements = new List<Statement>();
-
-            AddStatementsFromBlock(statements, context.statementBlock());
-            CurrentFunctionDef.Statements = statements;
         }
 
         private void AddStatementsFromIf(List<Statement> target, DaedalusParser.IfBlockStatementContext context)
@@ -90,13 +89,21 @@ namespace DaedalusCompiler.Compilation
         public List<Instance> GlobalInstances { get; } = new List<Instance>();
 
         protected Function CurrentFunctionDef;
-        private readonly DaedalusParser parser;
+        protected readonly DaedalusParser parser;
+        protected readonly IEnumerable<ParseResult> currentParseResults;
+        protected bool isInsideStatement;
 
-        public DaedalusStatefulParseTreeListener(DaedalusParser parser)
+        public DaedalusStatefulParseTreeListener(DaedalusParser parser, IEnumerable<ParseResult> currentParseResults)
         {
             this.parser = parser;
+            this.currentParseResults = currentParseResults ?? Enumerable.Empty<ParseResult>(); ;
         }
-
+        private RecognitionException CreateRecognitionException(ParserRuleContext context, SyntaxErrorCode errorCode)
+        {
+            var error = new RecognitionException(parser, parser.InputStream, context);
+            error.Data.Add(SyntaxError.DataKey_ErrorCode, errorCode);
+            return error;
+        }
         public override void EnterInlineDef([NotNull] DaedalusParser.InlineDefContext context)
         {
             AddGlobalsInlineDef(context);
@@ -112,10 +119,111 @@ namespace DaedalusCompiler.Compilation
             var id = context.Identifier()?.GetText();
             if (id?.Length > 0 && char.IsDigit(id[0]))
             {
-                var error = new RecognitionException(parser, parser.InputStream, context);
-                error.Data.Add(SyntaxError.DataKey_ErrorCode, SyntaxErrorCodes.D0001_No_Identifier_With_Starting_Digits);
+                var error = CreateRecognitionException(context, SyntaxErrorCodes.D0001_No_Identifier_With_Starting_Digits);
                 parser.NotifyErrorListeners(context.Identifier().Symbol, error.Message, error);
             }
+
+            // TODO: Implement checking if an identifier is defined.
+            return;
+
+            if (string.Equals(id, "hero", StringComparison.OrdinalIgnoreCase)) return;
+            if (string.Equals(id, "self", StringComparison.OrdinalIgnoreCase)) return;
+
+            if (!isInsideStatement) return;
+            if (context.Parent?.Parent is DaedalusParser.VarDeclContext) return;
+
+            // Variable definition, exists after this.
+            if (context.Parent?.Parent is DaedalusParser.VarValueDeclContext) return;
+            // Const definition, exists after this.
+            if (context.Parent?.Parent is DaedalusParser.ConstDefContext) return;
+            // Const Value definition, exists after this.
+            if (context.Parent?.Parent is DaedalusParser.ConstValueDefContext) return;
+            // Inside VarArray definition, exists after this.
+            if (context.Parent?.Parent is DaedalusParser.VarArrayDeclContext) return;
+
+            // After a "." or as a parameter.
+            if (context.Parent?.Parent is DaedalusParser.ReferenceAtomContext) {
+                if (context.Parent?.Parent?.Parent?.Parent is DaedalusParser.AssignmentContext) return;
+                if (context.Parent?.Parent?.Parent is DaedalusParser.ReferenceContext refCtx && refCtx.GetText().Contains('.')) return;
+            }
+            
+            // Inside Instance or Prototype definition.
+            if (context.Parent?.Parent?.Parent?.Parent?.Parent?.Parent?.Parent is DaedalusParser.InstanceDefContext) return;
+            if (context.Parent?.Parent?.Parent?.Parent?.Parent?.Parent?.Parent is DaedalusParser.PrototypeDefContext) return;
+
+            var isDefined = GetIsIdentifierDefined(id, context.Start.Column, context.Start.Line);
+            if (!isDefined)
+            {
+                var error = CreateRecognitionException(context, new SyntaxErrorCode("D0003", $"Identifier is not defined '{id}'"));
+                parser.NotifyErrorListeners(context.Start, error.Message, error);
+            }
+        }
+
+        public override void EnterStatement([NotNull] DaedalusParser.StatementContext context)
+        {
+            isInsideStatement = true;
+        }
+        public override void ExitStatement([NotNull] DaedalusParser.StatementContext context)
+        {
+            isInsideStatement = false;
+        }
+
+        private bool GetIsIdentifierDefined(string identifier, int col, int line)
+        {
+            bool isDefined = false;
+            var start = col;
+            var startLine = line;
+            if (CurrentFunctionDef != null)
+            {
+                foreach (var item in CurrentFunctionDef.Parameters)
+                {
+                    if (item.Name == identifier && ((item.Line < startLine) || (item.Column < start && item.Line == startLine)))
+                    {
+                        return true;
+                    }
+                }
+                foreach (var item in CurrentFunctionDef.LocalVariables)
+                {
+                    if (item.Name == identifier && ((item.Line < startLine) || (item.Column < start && item.Line == startLine)))
+                    {
+                        return true;
+                    }
+                }
+            }
+            if (!isDefined)
+            {
+                isDefined = FindGlobalIdentifier(identifier);
+            }
+            return isDefined;
+        }
+
+        private bool FindGlobalIdentifier(string name)
+        {
+            foreach (var c in GlobalConsts)
+                if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            foreach (var c in GlobalVars)
+                if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            foreach (var c in GlobalFunctions)
+                if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            foreach (var res in currentParseResults)
+            {
+                foreach (var c in res.GlobalConstants)
+                    if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                        return true;
+                foreach (var c in res.GlobalVariables)
+                    if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                        return true;
+                foreach (var c in res.GlobalFunctions)
+                    if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                        return true;
+                //foreach (var c in res.GlobalConstants)
+                //    if (string.Equals(c.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                //        return true;
+            }
+            return false;
         }
         public override void EnterVarDecl([NotNull] DaedalusParser.VarDeclContext context)
         {
@@ -133,13 +241,89 @@ namespace DaedalusCompiler.Compilation
         public override void EnterFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
         {
             var fd = context;
-            var p = new List<Variable>();
+
+            var statements = fd.statementBlock()?.statement();
+            var localVars = new List<Variable>();
+            if (statements != null)
+            {
+                for (int i = 0; i < statements.Length; i++)
+                {
+                    for (int j = 0; j < statements[i].ChildCount; j++)
+                    {
+                        if (statements[i].children[j] is DaedalusParser.VarDeclContext varDecl)
+                        {
+                            var varType = varDecl.typeReference().GetText();
+                            var varDecls = varDecl.varDecl();
+                            for (int k = 0; k < varDecls.Length; k++)
+                            {
+                                var innerVal = varDecls[k].varValueDecl();
+                                for (int v = 0; v < innerVal.Length; v++)
+                                {
+                                    localVars.Add(new Variable
+                                    {
+                                        Type = varDecls[k].typeReference().GetText(),
+                                        Column = innerVal[v].Start.Column,
+                                        Line = innerVal[v].Start.Line,
+                                        Name = innerVal[v].nameNode().GetText(),
+                                        Definition = new Defintion
+                                        {
+                                            Start = new DefinitionIndex(innerVal[v].Start.Line, innerVal[v].Start.Column),
+                                            End = new DefinitionIndex(innerVal[v].Start.Line + innerVal[v].GetText().Length, innerVal[v].Stop.Column)
+                                        }
+                                    });
+                                }
+                            }
+                            var varValues = varDecl.varValueDecl();
+                            for (int k = 0; k < varValues.Length; k++)
+                            {
+                                localVars.Add(new Variable
+                                {
+                                    Type = varType,
+                                    Column = varValues[k].Start.Column,
+                                    Line = varValues[k].Start.Line,
+                                    Name = varValues[k].nameNode().GetText(),
+                                    Definition = new Defintion
+                                    {
+                                        Start = new DefinitionIndex(varValues[k].Start.Line, varValues[k].Start.Column),
+                                        End = new DefinitionIndex(varValues[k].Start.Line + varValues[k].GetText().Length, varValues[k].Stop.Column)
+                                    }
+                                });
+                            }
+                        }
+                        else if (statements[i].children[j] is DaedalusParser.ConstDefContext constDef)
+                        {
+                            var varType = constDef.typeReference().GetText();
+                            var constValues = constDef.constValueDef();
+                            for (int k = 0; k < constValues.Length; k++)
+                            {
+                                var innerVal = constValues[k].constValueAssignment().expressionBlock().expression();
+
+                                localVars.Add(new Constant
+                                {
+                                    Type = varType,
+                                    Column = constValues[k].Start.Column,
+                                    Line = constValues[k].Start.Line,
+                                    Name = constValues[k].nameNode().GetText(),
+                                    Value = innerVal.GetText(),
+                                    Definition = new Defintion
+                                    {
+                                        Start = new DefinitionIndex(constValues[k].Start.Line, constValues[k].Start.Column),
+                                        End = new DefinitionIndex(constValues[k].Start.Line + constValues[k].GetText().Length, constValues[k].Stop.Column)
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            var parameters = new List<Variable>();
             var funcParameters = fd.parameterList()?.parameterDecl();
             if (funcParameters != null)
             {
                 foreach (var pdef in funcParameters)
                 {
-                    p.Add(new Variable
+                    parameters.Add(new Variable
                     {
                         Name = pdef.nameNode().GetText(),
                         Type = pdef.typeReference().GetText(),
@@ -171,14 +355,18 @@ namespace DaedalusCompiler.Compilation
                 ReturnType = fd.typeReference().GetText(),
                 Line = fncNamenode.Start.Line,
                 Column = fncNamenode.Start.Column,
-                Parameters = p,
+                Parameters = parameters,
+                LocalVariables = localVars,
                 Documentation = _docCommentBuilderCleaned ? "" : _docCommentBuilder.ToString(),
                 Definition = new Defintion { Start = new DefinitionIndex(fd.Start.Line, fd.Start.Column), End = new DefinitionIndex(fd.Stop.Line, fd.Stop.Column) }
             };
             CurrentFunctionDef = fnc;
             GlobalFunctions.Add(fnc);
         }
-
+        public override void ExitFunctionDef([NotNull] DaedalusParser.FunctionDefContext context)
+        {
+            CurrentFunctionDef = null;
+        }
         private void AddGlobalsBlockDef(Antlr4.Runtime.ParserRuleContext ruleContext)
         {
             // Classes

@@ -17,23 +17,19 @@ namespace DaedalusLanguageServer.Tests
         [TestMethod]
         public void ParseGothicSrc()
         {
-            int threads = Environment.ProcessorCount;
-            threads = 1;
-            var docMgr = new ParsedDocumentsManager();
-            var parsed = docMgr.ParseSrc(@"A:\Spiele\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src");
-            var e = parsed.First();
-            foreach (var kvp in parsed)
+            var AppDir = AppDomain.CurrentDomain.BaseDirectory;
+            var externals = new Dictionary<Uri, ParseResult>();
+            var buildInsPath = Path.Combine(AppDir, "DaedalusBuiltins");
+
+            foreach (var builtIn in Directory.EnumerateFiles(buildInsPath, "*.d"))
             {
-                if (kvp.Diagnostics.Any())
-                {
-                    Console.WriteLine($"Errors in {kvp.Uri}");
-                    foreach (var err in kvp.Diagnostics)
-                    {
-                        Console.WriteLine($"{err.Range.Start.Line}:{err.Range.Start.Character} {err.Code}: {err.Message}");
-                    }
-                }
+                var builtInUri = new Uri(builtIn);
+                var parsedResult = Compiler.Load(builtIn, true);
+                externals[builtInUri] = parsedResult;
             }
-            //Assert.IsTrue(!parsed.Values.Any(p => p.SyntaxErrors.Count > 0 && p.SyntaxErrors.Any(s => s.ErrorCode.Severity == ErrorSeverity.Error)));
+
+            string srcPath = @"A:\Spiele\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src";
+            var parseResults = Compiler.ParseSrc(srcPath, externals);
         }
 
         [TestMethod]

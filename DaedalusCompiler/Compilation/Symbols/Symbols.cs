@@ -12,7 +12,7 @@ namespace DaedalusCompiler.Compilation.Symbols
     {
         public string ReturnType { get; set; }
         public List<Variable> Parameters { get; set; }
-        public List<Statement> Statements { get; set; }
+        public List<Variable> LocalVariables { get; set; }
         public override string ToString() => $"func {ReturnType} {Name}({string.Join(", ", Parameters)})";
     }
 
