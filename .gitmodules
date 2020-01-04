@@ -1,0 +1,3 @@
+[submodule "DaedalusCompiler"]
+	path = DaedalusCompiler
+	url = https://github.com/dzieje-khorinis/DaedalusCompiler.git

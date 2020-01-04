@@ -144,7 +144,7 @@ namespace DaedalusLanguageServer
             ParsedDocumentsManager parsedDocumentsManager)
         {
             router.Window.LogInfo($"Parsing Gothic.Src. This might take a while.");
-            var parseResults = Compiler.ParseSrc(srcPath, externals);
+            var parseResults = FastCompiler.ParseSrc(srcPath, externals);
 
             foreach (var parseResult in parseResults)
             {

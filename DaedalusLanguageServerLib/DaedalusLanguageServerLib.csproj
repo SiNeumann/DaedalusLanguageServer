@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DaedalusCompiler\DaedalusCompiler.csproj" />
+    <ProjectReference Include="..\DaedalusCompilerExtension\DaedalusCompilerExtension.csproj" />
   </ItemGroup>
 
 </Project>

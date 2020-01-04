@@ -167,11 +167,11 @@ namespace DaedalusLanguageServerLib
             ParseResult parserResult = null;
             if (string.IsNullOrWhiteSpace(text))
             {
-                parserResult = Compiler.Load(localPath, detailed, GetDocuments().Values);
+                parserResult = FastCompiler.Load(localPath, detailed, GetDocuments().Values);
             }
             else
             {
-                parserResult = Compiler.Parse(text, newUri, detailed, GetDocuments().Values);
+                parserResult = FastCompiler.Parse(text, newUri, detailed, GetDocuments().Values);
             }
             PublishDiagnosticsParams result = null;
             if (parserResult.SyntaxErrors.Count > 0)

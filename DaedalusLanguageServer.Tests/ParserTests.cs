@@ -24,23 +24,23 @@ namespace DaedalusLanguageServer.Tests
             foreach (var builtIn in Directory.EnumerateFiles(buildInsPath, "*.d"))
             {
                 var builtInUri = new Uri(builtIn);
-                var parsedResult = Compiler.Load(builtIn, true);
+                var parsedResult = FastCompiler.Load(builtIn, true);
                 externals[builtInUri] = parsedResult;
             }
 
             string srcPath = @"A:\Spiele\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src";
-            var parseResults = Compiler.ParseSrc(srcPath, externals);
+            var parseResults = FastCompiler.ParseSrc(srcPath, externals);
         }
 
         [TestMethod]
         public void ParseInstance()
         {
-            var parsed = Compiler.Parse(@"instance PC_Hero (NPC_DEFAULT) {};");
+            var parsed = FastCompiler.Parse(@"instance PC_Hero (NPC_DEFAULT) {};");
         }
         [TestMethod]
         public void ParseMultiVarsAndNumericIdentifiers()
         {
-            var parsed = Compiler.Parse(@"///Does magical stuff
+            var parsed = FastCompiler.Parse(@"///Does magical stuff
 func int learn1hSkill(var int skill) {
 	var string 1hSkillText, var int meinInt;
 	1hSkillText = ConcatStrings (""Lerne: Einhand Stufe "", IntToString (skill));
@@ -64,7 +64,7 @@ func int learn1hSkill(var int skill) {
         [TestMethod]
         public void ParseFileWithVariables()
         {
-            var parsed = Compiler.Parse(@"const string NINJA_MANAREG_VERSION = ""ManaReg 1.1.0""
+            var parsed = FastCompiler.Parse(@"const string NINJA_MANAREG_VERSION = ""ManaReg 1.1.0""
 func void Ninja_ManaReg_Regeneration() {
     // Not during loading
     if (!Hlp_IsValidNpc(hero)) { return; };
